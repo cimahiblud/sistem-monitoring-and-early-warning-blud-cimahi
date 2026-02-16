@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Monitoring & Early Warning</title>
+
+<style>
+body{font-family:Arial;background:#f4f6f9;margin:20px}
+h1{text-align:center}
+.tabs{text-align:center;margin-bottom:15px}
+.tab{padding:8px 15px;border:none;background:#ddd;cursor:pointer;margin:3px}
+.tab.active{background:#007bff;color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{border:1px solid #ccc;padding:6px;text-align:center;font-size:13px}
+th{background:#007bff;color:#fff}
+.normal{background:#28a745;color:#fff}
+.warning{background:#ffc107}
+.critical{background:#dc3545;color:#fff}
+.summary{display:flex;justify-content:center;flex-wrap:wrap;margin-bottom:15px}
+.summary-box{padding:10px 15px;margin:5px;color:#fff;font-weight:bold}
+#clock{text-align:center;font-size:16px;font-weight:bold;margin-bottom:15px}
+
+#actionForm{
+display:none;position:fixed;top:25%;left:35%;width:30%;
+background:white;padding:20px;border:2px solid #333;
+box-shadow:0 0 15px rgba(0,0,0,0.4);z-index:999;
+}
+textarea{width:100%;height:80px}
+button{padding:5px 10px;cursor:pointer}
+</style>
+</head>
+
+<body onclick="initAudio()">
+
+<h1>Sistem Monitoring & Early Warning Kualitas Air</h1>
+<div id="clock"></div>
+
+<div class="top-buttons">
+    <button class="main-btn" onclick="openHistory()">📋 Lihat History Log</button>
+    <button class="main-btn" onclick="openChartPopup()">📈 Generate Grafik</button>
+</div>
+
+
+<div class="tabs">
+<button class="tab active" onclick="openTab(event,'pra')">Pra-Sedimentasi</button>
+<button class="tab" onclick="openTab(event,'reservoir')">Reservoir</button>
+<button class="tab" onclick="openTab(event,'clearwell')">Clearwell</button>
+<button class="tab" onclick="openTab(event,'sed1')">Sedimentasi 1</button>
+<button class="tab" onclick="openTab(event,'sed2')">Sedimentasi 2</button>
+<button class="tab" onclick="openTab(event,'filter')">Filter</button>
+</div>
+
+<div class="summary">
+<div id="sum-pra" class="summary-box normal">Pra: Normal</div>
+<div id="sum-res" class="summary-box normal">Reservoir: Normal</div>
+<div id="sum-clear" class="summary-box normal">Clearwell: Normal</div>
+<div id="sum-sed1" class="summary-box normal">Sed1: Normal</div>
+<div id="sum-sed2" class="summary-box normal">Sed2: Normal</div>
+</div>
+
+<div id="tables"></div>
+
+<div id="actionForm">
+<h3>Input Tindakan Operator</h3>
+<p id="formInfo"></p>
+<textarea id="actionText"></textarea><br><br>
+<button onclick="saveAction()">Simpan</button>
+<button onclick="closeForm()">Batal</button>
+</div>
+<!-- POPUPS -->
+<div id="criticalPopup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);color:white;z-index:1000;text-align:center;padding-top:15%;font-size:28px;font-weight:bold;">
+🚨 STATUS KRITIS TERDETEKSI 🚨<br><br>
+<div id="criticalText"></div><br>
+<button onclick="closeCriticalPopup()">Tutup</button>
+</div>
+
+<div id="historyPopup" style="display:none;position:fixed;top:5%;left:10%;width:80%;height:85%;background:white;z-index:1001;overflow:auto;padding:20px;">
+<h2 style="text-align:center;">History Log</h2>
+<table style="width:100%;border-collapse:collapse;">
+<thead><tr style="background:#007bff;color:white;">
+<th>Waktu</th><th>Unit</th><th>Status</th><th>Solusi</th><th>Tindakan</th>
+</tr></thead>
+<tbody id="historyBody"></tbody>
+</table><br>
+<div style="text-align:center;">
+<button onclick="closeHistory()">Tutup</button>
+<button onclick="clearHistory()">Hapus History</button>
+</div>
+</div>
+
+<div id="chartPopup" style="display:none;position:fixed;top:5%;left:10%;width:80%;height:85%;background:white;z-index:1002;padding:20px;">
+<h2 style="text-align:center;">Grafik Monitoring</h2>
+<div style="text-align:center;margin-bottom:15px;">
+<select id="chartUnit" onchange="updateParameterOptions()">
+<option value="pra">Pra-Sedimentasi</option>
+<option value="reservoir">Reservoir</option>
+<option value="clearwell">Clearwell</option>
+<option value="sed1">Sedimentasi 1</option>
+<option value="sed2">Sedimentasi 2</option>
+</select>
+<select id="chartParameter"></select>
+<button onclick="generateChart()">Tampilkan</button>
+<button onclick="closeChartPopup()">Tutup</button>
+</div>
+<div style="height:400px;">
+<canvas id="monitorChart"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
