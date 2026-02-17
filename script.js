@@ -198,7 +198,6 @@ values.map(v=>"<td>"+v+"</td>").join("")+
 "<td>"+aksi+"</td><td>-</td>";
 
 limitRows(id);
-}
 let sumId = null;
 
 if(id==="pra") sumId="sum-pra";
@@ -210,6 +209,8 @@ else if(id==="sed2") sumId="sum-sed2";
 if(sumId){
 document.getElementById(sumId).className="summary-box "+statusClass(status);
 document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;}
+}
+
 
 // ================= GOOGLE SHEET REAL DATA =================
 const sheetURL = "https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
