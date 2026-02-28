@@ -429,10 +429,20 @@ alert("Tidak ada data");
 return;
 }
 
-let csv = "Waktu,Unit,Status,Values\n";
+// Header dinamis (maksimal 7 parameter)
+let csv = "Waktu,Unit,Param1,Param2,Param3,Param4,Param5,Param6,Param7,Status\n";
 
 filtered.forEach(d=>{
-csv += `"${d.waktu}",${d.unit},${d.status},"${d.values.join(" | ")}"\n`;
+let row = [
+d.waktu,
+d.unit,
+...d.values,
+"", "", "", "", "", "", ""  
+];
+
+row = row.slice(0,9); // batasi sampai 9 kolom sebelum status
+
+csv += row.join(",") + "," + d.status + "\n";
 });
 
 let blob = new Blob([csv], {type:"text/csv"});
