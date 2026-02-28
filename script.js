@@ -416,9 +416,10 @@ localStorage.setItem("monitoringData", JSON.stringify(data));
 }
 
 function downloadData(days){
-let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
 
+let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
 let now = new Date();
+
 let filtered = data.filter(d=>{
 let diff = (now - new Date(d.waktu)) / (1000*60*60*24);
 return diff <= days;
@@ -429,26 +430,34 @@ alert("Tidak ada data");
 return;
 }
 
-// Header dinamis (maksimal 7 parameter)
-let csv = "Waktu,Unit,Param1,Param2,Param3,Param4,Param5,Param6,Param7,Status\n";
+let wb = XLSX.utils.book_new();
+
+// Kelompokkan berdasarkan unit
+let units = {};
 
 filtered.forEach(d=>{
-let row = [
-d.waktu,
-d.unit,
-...d.values,
-"", "", "", "", "", "", ""  
-];
-
-row = row.slice(0,9); // batasi sampai 9 kolom sebelum status
-
-csv += row.join(",") + "," + d.status + "\n";
+if(!units[d.unit]) units[d.unit] = [];
+units[d.unit].push(d);
 });
 
-let blob = new Blob([csv], {type:"text/csv"});
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "Monitoring_"+days+"_Hari.csv";
-link.click();
+Object.keys(units).forEach(unit=>{
+
+let rows = [];
+
+rows.push(["Waktu","Param1","Param2","Param3","Param4","Param5","Param6","Param7","Status"]);
+
+units[unit].forEach(d=>{
+let row = [d.waktu, ...d.values];
+while(row.length < 8) row.push("");
+row.push(d.status);
+rows.push(row);
+});
+
+let ws = XLSX.utils.aoa_to_sheet(rows);
+XLSX.utils.book_append_sheet(wb, ws, unit.toUpperCase());
+
+});
+
+XLSX.writeFile(wb, "Monitoring_"+days+"_Hari.xlsx");
 }
 
