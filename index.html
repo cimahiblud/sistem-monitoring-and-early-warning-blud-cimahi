@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Monitoring & Early Warning</title>
+<title>Dashboard Monitoring & Early Warning Sistem Kualitas Air BLUD Cimahi</title>
 
 <style>
 body{font-family:Arial;background:#f4f6f9;margin:20px}
@@ -40,6 +40,8 @@ button{padding:5px 10px;cursor:pointer}
 <div class="top-buttons">
     <button class="main-btn" onclick="openHistory()">📋 Lihat History Log</button>
     <button class="main-btn" onclick="openChartPopup()">📈 Generate Grafik</button>
+    <button onclick="downloadData(7)">⬇ Download 7 Hari</button>
+    <button onclick="downloadData(30)">⬇ Download 30 Hari</button>
 </div>
 
 
@@ -111,3 +113,4 @@ button{padding:5px 10px;cursor:pointer}
 <script src="script.js"></script>
 </body>
 </html>
+
