@@ -49,11 +49,11 @@ return `
 }
 
 document.getElementById("tables").innerHTML=
-tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Debit","Status","Solusi","Aksi","Tindakan Operator"]) +
-tableTemplate("reservoir",["Waktu","Turbidity","pH","Level","Temp","Cl","Debit","Status","Solusi","Aksi","Tindakan Operator"]) +
-tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Aksi","Tindakan Operator"]) +
-tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Aksi","Tindakan Operator"]) +
-tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Aksi","Tindakan Operator"])+
+tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Debit","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("reservoir",["Waktu","Turbidity","pH","Level","Temp","Cl","Debit","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"])+
 `<div id="filter" class="tab-content">
 
 <div class="filter-wrapper">
@@ -186,20 +186,19 @@ closeForm();
 function addRow(id,values,status){
 let tb=document.getElementById(id+"-body");
 let tr=tb.insertRow(0);
-
-let aksi=status!=="Normal"
-? `<button onclick="openActionForm(this.parentElement.parentElement,'${id.toUpperCase()}','${status}')">Input</button>`
-: "-";
+saveMonitoringData(id, values, status);
 
 tr.innerHTML="<td>"+timestamp()+"</td>"+
 values.map(v=>"<td>"+v+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
 "<td>"+solusi(status)+"</td>"+
-"<td>"+aksi+"</td><td>-</td>";
+"<td>-</td>";
 
 limitRows(id);
 let sumId = null;
-
+if(status==="Waspada" || status==="Kritis"){
+saveToHistory(id.toUpperCase(),status,solusi(status),"-");
+}
 if(id==="pra") sumId="sum-pra";
 else if(id==="reservoir") sumId="sum-res";
 else if(id==="clearwell") sumId="sum-clear";
@@ -282,9 +281,17 @@ console.log("Error load sheet:",err);
 }
 }
 
+function loadSavedMonitoring(){
+let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
+
+data.reverse().forEach(d=>{
+addRow(d.unit, d.values, d.status);
+});
+}
 window.onload = function(){
+loadSavedMonitoring();
 loadRealData();
-setInterval(loadRealData,60000); // update tiap 1 menit
+setInterval(loadRealData,60000);
 };
 
 // ================= HISTORY =================
@@ -397,3 +404,41 @@ scales:{ y:{ beginAtZero:true } }
 }
 });
 }
+function saveMonitoringData(unit, values, status){
+let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
+data.unshift({
+waktu: new Date().toISOString(),
+unit: unit,
+values: values,
+status: status
+});
+localStorage.setItem("monitoringData", JSON.stringify(data));
+}
+
+function downloadData(days){
+let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
+
+let now = new Date();
+let filtered = data.filter(d=>{
+let diff = (now - new Date(d.waktu)) / (1000*60*60*24);
+return diff <= days;
+});
+
+if(filtered.length===0){
+alert("Tidak ada data");
+return;
+}
+
+let csv = "Waktu,Unit,Status,Values\n";
+
+filtered.forEach(d=>{
+csv += `"${d.waktu}",${d.unit},${d.status},"${d.values.join(" | ")}"\n`;
+});
+
+let blob = new Blob([csv], {type:"text/csv"});
+let link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "Monitoring_"+days+"_Hari.csv";
+link.click();
+}
+
