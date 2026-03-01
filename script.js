@@ -143,7 +143,7 @@ tr.innerHTML="<td>"+waktu+"</td>"+
 values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
 "<td>"+solusi(status)+"</td>"+
-"<td>-</td>";
+"<td><button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi</button></td>";
 
 limitRows(id);
 
@@ -391,4 +391,44 @@ let ws=XLSX.utils.aoa_to_sheet(rows);
 XLSX.utils.book_append_sheet(wb,ws,"Monitoring");
 XLSX.writeFile(wb,"Monitoring_Data.xlsx");
 }
+
+let selectedRow = null;
+let selectedUnit = null;
+let selectedStatus = null;
+
+function openForm(button, unit, status){
+selectedRow = button.parentElement.parentElement;
+selectedUnit = unit;
+selectedStatus = status;
+
+document.getElementById("formInfo").innerText =
+"Unit: "+unit.toUpperCase()+" | Status: "+status;
+
+document.getElementById("actionText").value = "";
+document.getElementById("actionForm").style.display="block";
+}
+
+function closeForm(){
+document.getElementById("actionForm").style.display="none";
+}
+
+function saveAction(){
+let text = document.getElementById("actionText").value;
+if(!text){
+alert("Isi tindakan dulu!");
+return;
+}
+
+selectedRow.cells[selectedRow.cells.length-1].innerHTML = text;
+
+saveToHistory(
+selectedUnit,
+selectedStatus,
+solusi(selectedStatus),
+text
+);
+
+closeForm();
+}
+
 
