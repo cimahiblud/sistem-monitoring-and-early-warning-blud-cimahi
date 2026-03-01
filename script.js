@@ -86,15 +86,68 @@ setInterval(updateClock,1000); updateClock();
 
 // ================= STATUS =================
 function statusClass(s){return s==="Normal"?"normal":s==="Waspada"?"warning":"critical";}
-function solusi(s){
-if(s==="Normal") return "Parameter aman";
-if(s==="Waspada") return "Monitoring intensif";
-return "Tindakan segera!";
+function solusi(status, unit){
+
+if(status==="Normal"){
+return "Parameter aman";
 }
 
-function limitRows(id){
-let tb=document.getElementById(id+"-body");
-if(tb && tb.rows.length>20) tb.deleteRow(20);
+// ===== OPSI PER UNIT =====
+let opsiWaspada = [];
+let opsiKritis = [];
+
+if(unit==="pra"){
+opsiWaspada = [
+"Monitoring intensif",
+"Pembersihan saringan awal",
+"Observasi 30 menit"
+];
+
+opsiKritis = [
+"Hentikan aliran sementara",
+"Pembersihan total bak pra-sedimentasi",
+"Koordinasi supervisor"
+];
+}
+
+else if(unit==="reservoir"){
+opsiWaspada = [
+"Monitoring kadar klorin",
+"Pengecekan pompa distribusi",
+"Sampling ulang air"
+];
+
+opsiKritis = [
+"Isolasi reservoir",
+"Penambahan desinfektan",
+"Laporan ke kepala instalasi"
+];
+}
+
+else{
+opsiWaspada = [
+"Monitoring intensif",
+"Pemeriksaan unit"
+];
+
+opsiKritis = [
+"Tindakan darurat",
+"Koordinasi teknisi"
+];
+}
+
+// ===== RENDER DROPDOWN =====
+let opsi = status==="Waspada" ? opsiWaspada : opsiKritis;
+
+let warna = status==="Waspada" ? "#ffc107" : "#dc3545";
+
+return `
+<select style="background:${warna};font-weight:bold"
+onchange="saveSolusi(this,'${unit}','${status}')">
+<option value="">Pilih tindakan...</option>
+${opsi.map(o=>`<option>${o}</option>`).join("")}
+</select>
+`;
 }
 
 // ================= AUDIO ALARM =================
@@ -148,7 +201,7 @@ actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi</bu
 tr.innerHTML="<td>"+waktu+"</td>"+
 values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
-"<td>"+solusi(status)+"</td>"+
+"<td>"+solusi(status,id)+"</td>"+
 "<td>"+actionButton+"</td>";
 
 limitRows(id);
@@ -436,6 +489,26 @@ text
 
 closeForm();
 }
+function saveSolusi(selectElement, unit, status){
+
+let value = selectElement.value;
+if(!value) return;
+
+let row = selectElement.closest("tr");
+
+// ganti dropdown jadi teks setelah dipilih
+selectElement.outerHTML = value;
+
+// simpan ke history
+saveToHistory(
+unit,
+status,
+value,
+"-"
+);
+
+}
+
 
 
 
