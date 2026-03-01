@@ -139,11 +139,17 @@ waktu = new Date().toLocaleTimeString('id-ID');
 saveMonitoringData(id, values, status);
 }
 
+let actionButton = "-";
+
+if(status === "Waspada" || status === "Kritis"){
+actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi</button>";
+}
+
 tr.innerHTML="<td>"+waktu+"</td>"+
 values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
 "<td>"+solusi(status)+"</td>"+
-"<td><button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi</button></td>";
+"<td>"+actionButton+"</td>";
 
 limitRows(id);
 
@@ -430,5 +436,6 @@ text
 
 closeForm();
 }
+
 
 
