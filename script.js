@@ -38,7 +38,15 @@ sed2:[
 {name:"pH",col:4}
 ]
 };
+// ================= LIMIT ROWS =================
+function limitRows(id){
+let tb = document.getElementById(id+"-body");
+if(!tb) return;
 
+while(tb.rows.length > 20){
+tb.deleteRow(tb.rows.length - 1);
+}
+}
 // ================= MODE =================
 let dummyMode = true; 
 // ================= TABLE =================
@@ -193,15 +201,6 @@ playBeep(0.5,900);
 setTimeout(()=>playBeep(0.5,900),600);
 }
 }
-function limitRows(id){
-let tb = document.getElementById(id+"-body");
-if(!tb) return;
-
-while(tb.rows.length > 20){
-tb.deleteRow(tb.rows.length - 1);
-}
-}
-
 // ================= ADD ROW =================
 function addRow(id, values, status, waktu=null){
 
@@ -531,6 +530,7 @@ value,
 );
 
 }
+
 
 
 
