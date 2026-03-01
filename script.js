@@ -243,7 +243,26 @@ document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;
 
 triggerAlarm(status);
 }
+// ================= ADD FILTER ROW =================
+function addFilterRow(id, values, status){
 
+let tb = document.getElementById(id+"-body");
+if(!tb) return;
+
+let tr = tb.insertRow(0);
+
+let waktu = new Date().toLocaleTimeString('id-ID');
+
+tr.innerHTML =
+"<td>"+waktu+"</td>"+
+values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
+"<td class='"+statusClass(status)+"'>"+status+"</td>"+
+"<td>"+solusi(status)+"</td>";
+
+if(tb.rows.length > 20){
+tb.deleteRow(20);
+}
+}
 // ================= MONITORING CONTROL =================
 let monitoringInterval=null;
 
@@ -336,7 +355,12 @@ last["DEBIT_M3_RES"]
 addRow("clearwell",[last["TDS_CLEAR"],last["TURBIDITY_CLEAR"],last["EC_CLEAR"]],"Normal");
 addRow("sed1",[last["TURBIDITY_SED1"],last["TEMP_SED1"],last["EC_SED1"],last["PH_SED1"]],"Normal");
 addRow("sed2",[last["TURBIDITY_SED2"],last["TEMP_SED2"],last["EC_SED2"],last["PH_SED2"]],"Normal");
-
+// ================= FILTER =================
+addFilterRow("filter1",[last["WL_F1"],last["TEMP_F1"]],"Normal");
+addFilterRow("filter2",[last["WL_F2"],last["TEMP_F2"]],"Normal");
+addFilterRow("filter3",[last["WL_F3"],last["TEMP_F3"]],"Normal");
+addFilterRow("filter4",[last["WL_F4"],last["TEMP_F4"]],"Normal");
+addFilterRow("filter5",[last["WL_F5"],last["TEMP_F5"]],"Normal");
 }catch(err){
 console.log("Error load sheet:",err);
 }
@@ -530,6 +554,7 @@ value,
 );
 
 }
+
 
 
 
