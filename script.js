@@ -39,6 +39,8 @@ sed2:[
 ]
 };
 
+// ================= MODE =================
+let dummyMode = true; 
 // ================= TABLE =================
 function tableTemplate(id, headers){
 return `
@@ -190,6 +192,40 @@ startMonitoring();
 const sheetURL="https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
 
 async function loadRealData(){
+
+// ================= DUMMY MODE =================
+if(dummyMode){
+
+// nilai random agar terlihat realistis
+let turbPra = (Math.random()*15).toFixed(2);
+let ecPra = (200 + Math.random()*200).toFixed(0);
+let tempPra = (25 + Math.random()*5).toFixed(1);
+let tdsPra = (100 + Math.random()*200).toFixed(0);
+let debitLS = (10 + Math.random()*5).toFixed(2);
+let debitM3 = (800 + Math.random()*200).toFixed(0);
+
+// LOGIKA STATUS BERDASARKAN TURBIDITY
+let statusPra = "Normal";
+if(turbPra > 5) statusPra = "Waspada";
+if(turbPra > 10) statusPra = "Kritis";
+
+addRow("pra",[turbPra,ecPra,tempPra,tdsPra,debitLS,debitM3],statusPra);
+
+// reservoir dummy
+let turbRes = (Math.random()*10).toFixed(2);
+let statusRes = turbRes > 4 ? "Waspada" : "Normal";
+if(turbRes > 8) statusRes = "Kritis";
+
+addRow("reservoir",[turbRes,7.2,80,26,0.5,debitLS,debitM3],statusRes);
+
+addRow("clearwell",[120,2,250],"Normal");
+addRow("sed1",[4,26,200,7],"Normal");
+addRow("sed2",[4,26,200,7],"Normal");
+
+return; // hentikan supaya tidak fetch sheet
+}
+
+// ================= REAL DATA =================
 try{
 const res=await fetch(sheetURL);
 const data=await res.json();
@@ -197,14 +233,27 @@ if(data.length<1) return;
 
 let last=data[data.length-1];
 
-addRow("pra",[last["TURBIDITY_PRA"],last["EC_PRA"],last["TEMP_PRA"],last["TDS_PRA"],last["DEBIT_LS_PRA"],last["DEBIT_M3_PRA"]],"Normal");
+addRow("pra",[
+last["TURBIDITY_PRA"],
+last["EC_PRA"],
+last["TEMP_PRA"],
+last["TDS_PRA"],
+last["DEBIT_LS_PRA"],
+last["DEBIT_M3_PRA"]
+],"Normal");
 
-addRow("reservoir",[last["TURBIDITY_RES"],last["PH_RES"],last["LEVEL_RES"],last["TEMP_RES"],last["CL_RES"],last["DEBIT_LS_RES"],last["DEBIT_M3_RES"]],"Normal");
+addRow("reservoir",[
+last["TURBIDITY_RES"],
+last["PH_RES"],
+last["LEVEL_RES"],
+last["TEMP_RES"],
+last["CL_RES"],
+last["DEBIT_LS_RES"],
+last["DEBIT_M3_RES"]
+],"Normal");
 
 addRow("clearwell",[last["TDS_CLEAR"],last["TURBIDITY_CLEAR"],last["EC_CLEAR"]],"Normal");
-
 addRow("sed1",[last["TURBIDITY_SED1"],last["TEMP_SED1"],last["EC_SED1"],last["PH_SED1"]],"Normal");
-
 addRow("sed2",[last["TURBIDITY_SED2"],last["TEMP_SED2"],last["EC_SED2"],last["PH_SED2"]],"Normal");
 
 }catch(err){
@@ -342,3 +391,4 @@ let ws=XLSX.utils.aoa_to_sheet(rows);
 XLSX.utils.book_append_sheet(wb,ws,"Monitoring");
 XLSX.writeFile(wb,"Monitoring_Data.xlsx");
 }
+
