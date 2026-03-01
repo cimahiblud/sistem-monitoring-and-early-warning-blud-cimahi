@@ -68,10 +68,25 @@ tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Ti
 tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]);
 
 // ================= TAB =================
-function openTab(evt,id){
-document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
-document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+function openTab(evt, tabName){
+
+// sembunyikan semua konten
+document.querySelectorAll(".tab-content").forEach(function(tab){
+tab.style.display = "none";
+});
+
+// hilangkan active dari semua tombol
+document.querySelectorAll(".tab").forEach(function(btn){
+btn.classList.remove("active");
+});
+
+// tampilkan yang dipilih
+let selected = document.getElementById(tabName);
+if(selected){
+selected.style.display = "block";
+}
+
+// aktifkan tombol
 evt.currentTarget.classList.add("active");
 }
 
@@ -176,6 +191,14 @@ if(status==="Waspada") playBeep(0.3,600);
 if(status==="Kritis"){
 playBeep(0.5,900);
 setTimeout(()=>playBeep(0.5,900),600);
+}
+}
+function limitRows(id){
+let tb = document.getElementById(id+"-body");
+if(!tb) return;
+
+while(tb.rows.length > 20){
+tb.deleteRow(tb.rows.length - 1);
 }
 }
 
@@ -508,6 +531,7 @@ value,
 );
 
 }
+
 
 
 
