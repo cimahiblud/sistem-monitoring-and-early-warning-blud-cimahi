@@ -1,6 +1,7 @@
 // ================= CHART GLOBAL =================
 let chartInstance = null;
 
+// ================= PARAMETER MAP =================
 const parameterMap = {
 pra:[
 {name:"Turbidity",col:1},
@@ -37,6 +38,7 @@ sed2:[
 {name:"pH",col:4}
 ]
 };
+
 // ================= TABLE =================
 function tableTemplate(id, headers){
 return `
@@ -49,67 +51,19 @@ return `
 }
 
 document.getElementById("tables").innerHTML=
-tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Debit L/s","Debit M3","Status","Solusi","Tindakan Operator"]) +
-tableTemplate("reservoir",["Waktu","Turbidity","pH","Level","Temp","Cl","Debit L/s","Debit M3","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("pra",[
+"Waktu","Turbidity","EC","Temp","TDS",
+"Debit L/s","Debit m3",
+"Status","Solusi","Tindakan Operator"
+]) +
+tableTemplate("reservoir",[
+"Waktu","Turbidity","pH","Level","Temp","Cl",
+"Debit L/s","Debit m3",
+"Status","Solusi","Tindakan Operator"
+]) +
 tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
 tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
-tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"])+
-`<div id="filter" class="tab-content">
-
-<div class="filter-wrapper">
-
-<div class="filter-box">
-<h4>Filter 1</h4>
-<table>
-<thead>
-<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
-</thead>
-<tbody id="filter1-body"></tbody>
-</table>
-</div>
-
-<div class="filter-box">
-<h4>Filter 2</h4>
-<table>
-<thead>
-<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
-</thead>
-<tbody id="filter2-body"></tbody>
-</table>
-</div>
-
-<div class="filter-box">
-<h4>Filter 3</h4>
-<table>
-<thead>
-<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
-</thead>
-<tbody id="filter3-body"></tbody>
-</table>
-</div>
-
-<div class="filter-box">
-<h4>Filter 4</h4>
-<table>
-<thead>
-<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
-</thead>
-<tbody id="filter4-body"></tbody>
-</table>
-</div>
-
-<div class="filter-box">
-<h4>Filter 5</h4>
-<table>
-<thead>
-<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
-</thead>
-<tbody id="filter5-body"></tbody>
-</table>
-</div>
-
-</div>
-</div>`
+tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]);
 
 // ================= TAB =================
 function openTab(evt,id){
@@ -128,8 +82,6 @@ now.toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'
 }
 setInterval(updateClock,1000); updateClock();
 
-function timestamp(){return new Date().toLocaleTimeString('id-ID');}
-
 // ================= STATUS =================
 function statusClass(s){return s==="Normal"?"normal":s==="Waspada"?"warning":"critical";}
 function solusi(s){
@@ -137,49 +89,41 @@ if(s==="Normal") return "Parameter aman";
 if(s==="Waspada") return "Monitoring intensif";
 return "Tindakan segera!";
 }
+
 function limitRows(id){
 let tb=document.getElementById(id+"-body");
-if(tb.rows.length>20) tb.deleteRow(20);
+if(tb && tb.rows.length>20) tb.deleteRow(20);
 }
 
-// ================= ALARM =================
+// ================= AUDIO ALARM =================
 let audioContext=null;
-function initAudio(){if(!audioContext){audioContext=new(window.AudioContext||window.webkitAudioContext)();}}
-function playBeep(d,f){
+function initAudio(){
+if(!audioContext){
+audioContext=new(window.AudioContext||window.webkitAudioContext)();
+}
+}
+
+function playBeep(duration,frequency){
+if(!audioContext) return;
 let osc=audioContext.createOscillator();
 let gain=audioContext.createGain();
-osc.connect(gain); gain.connect(audioContext.destination);
-osc.frequency.value=f; osc.start();
+osc.connect(gain);
+gain.connect(audioContext.destination);
+osc.frequency.value=frequency;
+osc.start();
 gain.gain.setValueAtTime(1,audioContext.currentTime);
-gain.gain.exponentialRampToValueAtTime(0.001,audioContext.currentTime+d);
-osc.stop(audioContext.currentTime+d);
-}
-function triggerAlarm(status){
-if(!audioContext) return;
-if(status==="Waspada") playBeep(0.3,600);
-if(status==="Kritis"){ playBeep(0.5,900); setTimeout(()=>playBeep(0.5,900),600); }
+gain.gain.exponentialRampToValueAtTime(0.001,audioContext.currentTime+duration);
+osc.stop(audioContext.currentTime+duration);
 }
 
-// ================= ACTION =================
-let currentRow=null;
-function openActionForm(row,unit,status){
-currentRow=row;
-document.getElementById("formInfo").innerText=unit+" | "+status;
-document.getElementById("actionForm").style.display="block";
+function triggerAlarm(status){
+if(status==="Waspada") playBeep(0.3,600);
+if(status==="Kritis"){
+playBeep(0.5,900);
+setTimeout(()=>playBeep(0.5,900),600);
 }
-function closeForm(){document.getElementById("actionForm").style.display="none";}
-function saveAction(){
-let text=document.getElementById("actionText").value;
-if(text==="") return alert("Isi tindakan dulu");
-currentRow.cells[currentRow.cells.length-1].innerText=text;
-saveToHistory(
-document.getElementById("formInfo").innerText.split(" | ")[0],
-document.getElementById("formInfo").innerText.split(" | ")[1],
-currentRow.cells[currentRow.cells.length-3].innerText,
-text);
-document.getElementById("actionText").value="";
-closeForm();
 }
+
 // ================= ADD ROW =================
 function addRow(id, values, status, waktu=null){
 
@@ -201,7 +145,7 @@ values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
 
 limitRows(id);
 
-// update summary
+// summary update
 let sumId=null;
 if(id==="pra") sumId="sum-pra";
 else if(id==="reservoir") sumId="sum-res";
@@ -213,110 +157,74 @@ if(sumId){
 document.getElementById(sumId).className="summary-box "+statusClass(status);
 document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;
 }
+
+triggerAlarm(status);
 }
 
 // ================= MONITORING CONTROL =================
-let monitoringInterval = null;
+let monitoringInterval=null;
 
 function startMonitoring(){
 if(monitoringInterval) return;
-monitoringInterval = setInterval(loadRealData,60000);
+monitoringInterval=setInterval(loadRealData,60000);
 }
 
 function stopMonitoring(){
 clearInterval(monitoringInterval);
-monitoringInterval = null;
+monitoringInterval=null;
 }
 
 document.addEventListener("visibilitychange", function(){
-if(document.visibilityState === "visible"){
-startMonitoring();
-}else{
-stopMonitoring();
-}
+if(document.visibilityState==="visible") startMonitoring();
+else stopMonitoring();
 });
 
-window.onload = function(){
+window.onload=function(){
+initAudio();
 loadSavedMonitoring();
 loadRealData();
 startMonitoring();
 };
-// ================= GOOGLE SHEET REAL DATA =================
-const sheetURL = "https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
+
+// ================= GOOGLE SHEET =================
+const sheetURL="https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
 
 async function loadRealData(){
 try{
+const res=await fetch(sheetURL);
+const data=await res.json();
+if(data.length<1) return;
 
-const res = await fetch(sheetURL);
-const data = await res.json();
+let last=data[data.length-1];
 
-if(data.length < 4) return;
+addRow("pra",[last["TURBIDITY_PRA"],last["EC_PRA"],last["TEMP_PRA"],last["TDS_PRA"],last["DEBIT_LS_PRA"],last["DEBIT_M3_PRA"]],"Normal");
 
-// ambil baris terakhir
-let last = data[data.length - 1];
+addRow("reservoir",[last["TURBIDITY_RES"],last["PH_RES"],last["LEVEL_RES"],last["TEMP_RES"],last["CL_RES"],last["DEBIT_LS_RES"],last["DEBIT_M3_RES"]],"Normal");
 
-// ================= PRA =================
-addRow("pra",[
-last["TURBIDITY_PRA"],
-last["EC_PRA"],
-last["TEMP_PRA"],
-last["TDS_PRA"],
-last["DEBIT_LS_PRA"],
-last["DEBIT_M3_PRA"]
-],"Normal");
+addRow("clearwell",[last["TDS_CLEAR"],last["TURBIDITY_CLEAR"],last["EC_CLEAR"]],"Normal");
 
-// ================= RESERVOIR =================
-addRow("reservoir",[
-last["TURBIDITY_RES"],
-last["PH_RES"],
-last["LEVEL_RES"],
-last["TEMP_RES"],
-last["CL_RES"],
-last["DEBIT_LS_RES"],
-last["DEBIT_M3_RES"]
-],"Normal");
+addRow("sed1",[last["TURBIDITY_SED1"],last["TEMP_SED1"],last["EC_SED1"],last["PH_SED1"]],"Normal");
 
-// ================= CLEARWELL =================
-addRow("clearwell",[
-last["TDS_CLEAR"],
-last["TURBIDITY_CLEAR"],
-last["EC_CLEAR"]
-],"Normal");
-
-// ================= SED1 =================
-addRow("sed1",[
-last["TURBIDITY_SED1"],
-last["TEMP_SED1"],
-last["EC_SED1"],
-last["PH_SED1"]
-],"Normal");
-
-// ================= SED2 =================
-addRow("sed2",[
-last["TURBIDITY_SED2"],
-last["TEMP_SED2"],
-last["EC_SED2"],
-last["PH_SED2"]
-],"Normal");
-
-// ================= FILTER =================
-addRow("filter1",[last["WL_F1"],last["TEMP_F1"]],"Normal");
-addRow("filter2",[last["WL_F2"],last["TEMP_F2"]],"Normal");
-addRow("filter3",[last["WL_F3"],last["TEMP_F3"]],"Normal");
-addRow("filter4",[last["WL_F4"],last["TEMP_F4"]],"Normal");
-addRow("filter5",[last["WL_F5"],last["TEMP_F5"]],"Normal");
+addRow("sed2",[last["TURBIDITY_SED2"],last["TEMP_SED2"],last["EC_SED2"],last["PH_SED2"]],"Normal");
 
 }catch(err){
 console.log("Error load sheet:",err);
 }
 }
 
+// ================= STORAGE =================
 function loadSavedMonitoring(){
-let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
-
+let data=JSON.parse(localStorage.getItem("monitoringData"))||[];
 data.forEach(d=>{
-addRow(d.unit, d.values, d.status, new Date(d.waktu).toLocaleTimeString('id-ID'));
+addRow(d.unit,d.values,d.status,new Date(d.waktu).toLocaleTimeString('id-ID'));
 });
+}
+
+function saveMonitoringData(unit,values,status){
+let data=JSON.parse(localStorage.getItem("monitoringData"))||[];
+data.unshift({waktu:new Date().toISOString(),unit,values,status});
+if(data.length>2000) data=data.slice(0,2000);
+localStorage.setItem("monitoringData",JSON.stringify(data));
 }
 
 // ================= HISTORY =================
@@ -325,9 +233,12 @@ let h=JSON.parse(localStorage.getItem("historyLog"))||[];
 h.unshift({waktu:new Date().toLocaleString("id-ID"),unit,status,solusi,tindakan});
 localStorage.setItem("historyLog",JSON.stringify(h));
 }
+
 function openHistory(){
 let h=JSON.parse(localStorage.getItem("historyLog"))||[];
-let body=document.getElementById("historyBody"); body.innerHTML="";
+let body=document.getElementById("historyBody");
+if(!body) return;
+body.innerHTML="";
 h.forEach(i=>{
 body.innerHTML+=`<tr>
 <td>${i.waktu}</td>
@@ -338,24 +249,21 @@ body.innerHTML+=`<tr>
 });
 document.getElementById("historyPopup").style.display="block";
 }
-function closeHistory(){document.getElementById("historyPopup").style.display="none";}
-function clearHistory(){localStorage.removeItem("historyLog"); openHistory();}
 
-// ================= KRITIS POPUP =================
-function showCriticalPopup(unit){
-document.getElementById("criticalText").innerText="Unit: "+unit;
-document.getElementById("criticalPopup").style.display="block";
+function closeHistory(){
+document.getElementById("historyPopup").style.display="none";
 }
-function closeCriticalPopup(){document.getElementById("criticalPopup").style.display="none";}
+
+function clearHistory(){
+localStorage.removeItem("historyLog");
+openHistory();
+}
 
 // ================= CHART =================
-
-
 function openChartPopup(){
 document.getElementById("chartPopup").style.display="block";
 updateParameterOptions();
 }
-
 
 function closeChartPopup(){
 document.getElementById("chartPopup").style.display="none";
@@ -364,11 +272,8 @@ document.getElementById("chartPopup").style.display="none";
 function updateParameterOptions(){
 let unit=document.getElementById("chartUnit").value;
 let select=document.getElementById("chartParameter");
-
 if(!parameterMap[unit]) return;
-
 select.innerHTML="";
-
 parameterMap[unit].forEach(function(p){
 let opt=document.createElement("option");
 opt.value=p.col;
@@ -377,23 +282,13 @@ select.appendChild(opt);
 });
 }
 
-
-
 function generateChart(){
-
 let unit=document.getElementById("chartUnit").value;
 let col=parseInt(document.getElementById("chartParameter").value);
 let rows=document.getElementById(unit+"-body").rows;
 
-if(!col){
-alert("Pilih parameter dulu");
-return;
-}
-
-if(rows.length===0){
-alert("Belum ada data");
-return;
-}
+if(!col){alert("Pilih parameter dulu");return;}
+if(rows.length===0){alert("Belum ada data");return;}
 
 let labels=[];
 let data=[];
@@ -405,9 +300,7 @@ data.push(parseFloat(rows[i].cells[col].innerText));
 
 let ctx=document.getElementById("monitorChart").getContext("2d");
 
-if(chartInstance){
-chartInstance.destroy();
-}
+if(chartInstance) chartInstance.destroy();
 
 chartInstance=new Chart(ctx,{
 type:'line',
@@ -416,8 +309,6 @@ labels:labels,
 datasets:[{
 label:document.getElementById("chartParameter").selectedOptions[0].text,
 data:data,
-borderColor:'#007bff',
-backgroundColor:'rgba(0,123,255,0.2)',
 borderWidth:2,
 tension:0.3
 }]
@@ -429,57 +320,25 @@ scales:{ y:{ beginAtZero:true } }
 }
 });
 }
-function saveMonitoringData(unit, values, status){
-let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
 
-data.unshift({
-waktu: new Date().toISOString(),
-unit: unit,
-values: values,
-status: status
-});
-
-// batasi maksimal 2000 data
-if(data.length > 2000){
-data = data.slice(0,2000);
-}
-
-localStorage.setItem("monitoringData", JSON.stringify(data));
-}
-
+// ================= DOWNLOAD =================
 function downloadData(){
+let data=JSON.parse(localStorage.getItem("monitoringData"))||[];
+if(data.length===0){alert("Tidak ada data");return;}
 
-let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
+let limited=data.slice(0,500);
 
-if(data.length===0){
-alert("Tidak ada data");
-return;
-}
-
-// batasi maksimal 500 data terakhir
-let limited = data.slice(0,500);
-
-let rows = [];
-rows.push(["Waktu","Unit","Param1","Param2","Param3","Param4","Param5","Param6","Param7","Status"]);
+let rows=[["Waktu","Unit","Param1","Param2","Param3","Param4","Param5","Param6","Param7","Status"]];
 
 limited.forEach(d=>{
-let row = [new Date(d.waktu).toLocaleString("id-ID"), d.unit, ...d.values];
-while(row.length < 9) row.push("");
+let row=[new Date(d.waktu).toLocaleString("id-ID"),d.unit,...d.values];
+while(row.length<9) row.push("");
 row.push(d.status);
 rows.push(row);
 });
 
-let wb = XLSX.utils.book_new();
-let ws = XLSX.utils.aoa_to_sheet(rows);
-XLSX.utils.book_append_sheet(wb, ws, "Monitoring");
-
-XLSX.writeFile(wb, "Monitoring_Data.xlsx");
+let wb=XLSX.utils.book_new();
+let ws=XLSX.utils.aoa_to_sheet(rows);
+XLSX.utils.book_append_sheet(wb,ws,"Monitoring");
+XLSX.writeFile(wb,"Monitoring_Data.xlsx");
 }
-
-
-
-
-
-
-
-
