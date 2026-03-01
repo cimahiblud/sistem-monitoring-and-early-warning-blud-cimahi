@@ -1,6 +1,4 @@
-
 // ================= CHART GLOBAL =================
-
 let chartInstance = null;
 
 const parameterMap = {
@@ -9,7 +7,8 @@ pra:[
 {name:"EC",col:2},
 {name:"Temp",col:3},
 {name:"TDS",col:4},
-{name:"Debit",col:5}
+{name:"Debit L/s",col:5},
+{name:"Debit m3",col:6}
 ],
 reservoir:[
 {name:"Turbidity",col:1},
@@ -17,7 +16,8 @@ reservoir:[
 {name:"Level",col:3},
 {name:"Temp",col:4},
 {name:"Cl",col:5},
-{name:"Debit",col:6}
+{name:"Debit L/s",col:6},
+{name:"Debit m3",col:7}
 ],
 clearwell:[
 {name:"TDS",col:1},
@@ -49,8 +49,8 @@ return `
 }
 
 document.getElementById("tables").innerHTML=
-tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Debit","Status","Solusi","Tindakan Operator"]) +
-tableTemplate("reservoir",["Waktu","Turbidity","pH","Level","Temp","Cl","Debit","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Debit L/s","Debit M3","Status","Solusi","Tindakan Operator"]) +
+tableTemplate("reservoir",["Waktu","Turbidity","pH","Level","Temp","Cl","Debit L/s","Debit M3","Status","Solusi","Tindakan Operator"]) +
 tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
 tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
 tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"])+
@@ -180,28 +180,29 @@ text);
 document.getElementById("actionText").value="";
 closeForm();
 }
-
 // ================= ADD ROW =================
-
 function addRow(id, values, status, waktu=null){
 
 let tb=document.getElementById(id+"-body");
+if(!tb) return;
+
 let tr=tb.insertRow(0);
 
-// hanya simpan kalau ini data baru
 if(!waktu){
 waktu = new Date().toLocaleTimeString('id-ID');
 saveMonitoringData(id, values, status);
 }
 
 tr.innerHTML="<td>"+waktu+"</td>"+
-values.map(v=>"<td>"+v+"</td>").join("")+
+values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
 "<td>"+solusi(status)+"</td>"+
 "<td>-</td>";
 
 limitRows(id);
-}
+
+// update summary
+let sumId=null;
 if(id==="pra") sumId="sum-pra";
 else if(id==="reservoir") sumId="sum-res";
 else if(id==="clearwell") sumId="sum-clear";
@@ -210,9 +211,11 @@ else if(id==="sed2") sumId="sum-sed2";
 
 if(sumId){
 document.getElementById(sumId).className="summary-box "+statusClass(status);
-document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;}
+document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;
+}
 }
 
+// ================= MONITORING CONTROL =================
 let monitoringInterval = null;
 
 function startMonitoring(){
@@ -238,8 +241,6 @@ loadSavedMonitoring();
 loadRealData();
 startMonitoring();
 };
-
-
 // ================= GOOGLE SHEET REAL DATA =================
 const sheetURL = "https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
 
@@ -474,6 +475,7 @@ XLSX.utils.book_append_sheet(wb, ws, "Monitoring");
 
 XLSX.writeFile(wb, "Monitoring_Data.xlsx");
 }
+
 
 
 
