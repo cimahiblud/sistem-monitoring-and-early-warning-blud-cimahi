@@ -213,7 +213,6 @@ if(sumId){
 document.getElementById(sumId).className="summary-box "+statusClass(status);
 document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;
 }
-}
 
 // ================= MONITORING CONTROL =================
 let monitoringInterval = null;
@@ -475,6 +474,7 @@ XLSX.utils.book_append_sheet(wb, ws, "Monitoring");
 
 XLSX.writeFile(wb, "Monitoring_Data.xlsx");
 }
+
 
 
 
