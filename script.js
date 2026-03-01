@@ -183,21 +183,24 @@ closeForm();
 
 // ================= ADD ROW =================
 
-function addRow(id,values,status){
+function addRow(id, values, status, waktu=null){
+
 let tb=document.getElementById(id+"-body");
 let tr=tb.insertRow(0);
-saveMonitoringData(id, values, status);
 
-tr.innerHTML="<td>"+timestamp()+"</td>"+
+// hanya simpan kalau ini data baru
+if(!waktu){
+waktu = new Date().toLocaleTimeString('id-ID');
+saveMonitoringData(id, values, status);
+}
+
+tr.innerHTML="<td>"+waktu+"</td>"+
 values.map(v=>"<td>"+v+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
 "<td>"+solusi(status)+"</td>"+
 "<td>-</td>";
 
 limitRows(id);
-let sumId = null;
-if(status==="Waspada" || status==="Kritis"){
-saveToHistory(id.toUpperCase(),status,solusi(status),"-");
 }
 if(id==="pra") sumId="sum-pra";
 else if(id==="reservoir") sumId="sum-res";
@@ -209,6 +212,32 @@ if(sumId){
 document.getElementById(sumId).className="summary-box "+statusClass(status);
 document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;}
 }
+
+let monitoringInterval = null;
+
+function startMonitoring(){
+if(monitoringInterval) return;
+monitoringInterval = setInterval(loadRealData,60000);
+}
+
+function stopMonitoring(){
+clearInterval(monitoringInterval);
+monitoringInterval = null;
+}
+
+document.addEventListener("visibilitychange", function(){
+if(document.visibilityState === "visible"){
+startMonitoring();
+}else{
+stopMonitoring();
+}
+});
+
+window.onload = function(){
+loadSavedMonitoring();
+loadRealData();
+startMonitoring();
+};
 
 
 // ================= GOOGLE SHEET REAL DATA =================
@@ -284,15 +313,10 @@ console.log("Error load sheet:",err);
 function loadSavedMonitoring(){
 let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
 
-data.reverse().forEach(d=>{
-addRow(d.unit, d.values, d.status);
+data.forEach(d=>{
+addRow(d.unit, d.values, d.status, new Date(d.waktu).toLocaleTimeString('id-ID'));
 });
 }
-window.onload = function(){
-loadSavedMonitoring();
-loadRealData();
-setInterval(loadRealData,60000);
-};
 
 // ================= HISTORY =================
 function saveToHistory(unit,status,solusi,tindakan){
@@ -406,58 +430,51 @@ scales:{ y:{ beginAtZero:true } }
 }
 function saveMonitoringData(unit, values, status){
 let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
+
 data.unshift({
 waktu: new Date().toISOString(),
 unit: unit,
 values: values,
 status: status
 });
+
+// batasi maksimal 2000 data
+if(data.length > 2000){
+data = data.slice(0,2000);
+}
+
 localStorage.setItem("monitoringData", JSON.stringify(data));
 }
 
-function downloadData(days){
+function downloadData(){
 
 let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
-let now = new Date();
 
-let filtered = data.filter(d=>{
-let diff = (now - new Date(d.waktu)) / (1000*60*60*24);
-return diff <= days;
-});
-
-if(filtered.length===0){
+if(data.length===0){
 alert("Tidak ada data");
 return;
 }
 
-let wb = XLSX.utils.book_new();
-
-// Kelompokkan berdasarkan unit
-let units = {};
-
-filtered.forEach(d=>{
-if(!units[d.unit]) units[d.unit] = [];
-units[d.unit].push(d);
-});
-
-Object.keys(units).forEach(unit=>{
+// batasi maksimal 500 data terakhir
+let limited = data.slice(0,500);
 
 let rows = [];
+rows.push(["Waktu","Unit","Param1","Param2","Param3","Param4","Param5","Param6","Param7","Status"]);
 
-rows.push(["Waktu","Param1","Param2","Param3","Param4","Param5","Param6","Param7","Status"]);
-
-units[unit].forEach(d=>{
-let row = [d.waktu, ...d.values];
-while(row.length < 8) row.push("");
+limited.forEach(d=>{
+let row = [new Date(d.waktu).toLocaleString("id-ID"), d.unit, ...d.values];
+while(row.length < 9) row.push("");
 row.push(d.status);
 rows.push(row);
 });
 
+let wb = XLSX.utils.book_new();
 let ws = XLSX.utils.aoa_to_sheet(rows);
-XLSX.utils.book_append_sheet(wb, ws, unit.toUpperCase());
+XLSX.utils.book_append_sheet(wb, ws, "Monitoring");
 
-});
-
-XLSX.writeFile(wb, "Monitoring_"+days+"_Hari.xlsx");
+XLSX.writeFile(wb, "Monitoring_Data.xlsx");
 }
+
+
+
 
