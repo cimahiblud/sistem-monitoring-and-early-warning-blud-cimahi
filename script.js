@@ -73,7 +73,64 @@ tableTemplate("reservoir",[
 ]) +
 tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
 tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
-tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]);
+tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"])
++
+`<div id="filter" class="tab-content">
+
+<div class="filter-wrapper">
+
+<div class="filter-box">
+<h4>Filter 1</h4>
+<table>
+<thead>
+<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
+</thead>
+<tbody id="filter1-body"></tbody>
+</table>
+</div>
+
+<div class="filter-box">
+<h4>Filter 2</h4>
+<table>
+<thead>
+<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
+</thead>
+<tbody id="filter2-body"></tbody>
+</table>
+</div>
+
+<div class="filter-box">
+<h4>Filter 3</h4>
+<table>
+<thead>
+<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
+</thead>
+<tbody id="filter3-body"></tbody>
+</table>
+</div>
+
+<div class="filter-box">
+<h4>Filter 4</h4>
+<table>
+<thead>
+<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
+</thead>
+<tbody id="filter4-body"></tbody>
+</table>
+</div>
+
+<div class="filter-box">
+<h4>Filter 5</h4>
+<table>
+<thead>
+<tr><th>Waktu</th><th>Water Level</th><th>Temperatur</th><th>Status</th><th>Keterangan</th></tr>
+</thead>
+<tbody id="filter5-body"></tbody>
+</table>
+</div>
+
+</div>
+</div>`
 
 // ================= TAB =================
 function openTab(evt, tabName){
@@ -554,6 +611,7 @@ value,
 );
 
 }
+
 
 
 
