@@ -657,31 +657,30 @@ if(body) body.innerHTML="";
 });
 }
 
-let realtimeInterval = null;
+let monitoringInterval = null;
 
-function startRealtime(){
-if(realtimeInterval) return;
+function startMonitoring(){
+if(monitoringInterval) return;
 
-realtimeInterval = setInterval(()=>{
+monitoringInterval = setInterval(()=>{
 loadRealData();
-}, 60000); // 1 menit
+}, 60000);
 }
 
-function stopRealtime(){
-clearInterval(realtimeInterval);
-realtimeInterval = null;
+function stopMonitoring(){
+clearInterval(monitoringInterval);
+monitoringInterval = null;
 }
 
 document.addEventListener("visibilitychange", function(){
 if(document.visibilityState === "visible"){
-startRealtime();
+startMonitoring();
 }else{
-stopRealtime();
+stopMonitoring();
 }
 });
 
 window.onload = function(){
 clearAllTables();
-startRealtime();
+startMonitoring();
 };
-
