@@ -657,36 +657,31 @@ if(body) body.innerHTML="";
 });
 }
 
-let realtimeInterval;
+let realtimeInterval = null;
 
 function startRealtime(){
+if(realtimeInterval) return;
+
 realtimeInterval = setInterval(()=>{
-generateRandomData();
-}, 3000);
+loadRealData();
+}, 60000); // 1 menit
 }
 
 function stopRealtime(){
 clearInterval(realtimeInterval);
+realtimeInterval = null;
 }
 
 document.addEventListener("visibilitychange", function(){
-if(document.hidden){
-stopRealtime();
-}else{
+if(document.visibilityState === "visible"){
 startRealtime();
+}else{
+stopRealtime();
 }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
+window.onload = function(){
+clearAllTables();
+startRealtime();
+};
 
