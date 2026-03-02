@@ -295,9 +295,17 @@ else if(id==="sed2") sumId="sum-sed2";
 
 if(sumId){
 document.getElementById(sumId).className="summary-box "+statusClass(status);
-document.getElementById(sumId).innerText=id.toUpperCase()+" : "+status;
-}
+let labelMap = {
+pra: "PRA-SED",
+reservoir: "RESERVOIR",
+clearwell: "CLEARWELL",
+sed1: "SED-1",
+sed2: "SED-2"
+};
 
+let label = labelMap[id] || id.toUpperCase();
+
+document.getElementById(sumId).innerText = label + " : " + status;
 triggerAlarm(status);
 }
 // ================= ADD FILTER ROW =================
@@ -611,6 +619,7 @@ value,
 );
 
 }
+
 
 
 
