@@ -308,6 +308,7 @@ let label = labelMap[id] || id.toUpperCase();
 document.getElementById(sumId).innerText = label + " : " + status;
 triggerAlarm(status);
 }
+}
 // ================= ADD FILTER ROW =================
 function addFilterRow(id, values, status){
 
@@ -619,6 +620,7 @@ value,
 );
 
 }
+
 
 
 
