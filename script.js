@@ -274,7 +274,7 @@ saveMonitoringData(id, values, status);
 let actionButton = "-";
 
 if(status === "Waspada" || status === "Kritis"){
-actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi</button>";
+actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi Tindakan</button>";
 }
 
 tr.innerHTML="<td>"+waktu+"</td>"+
@@ -611,6 +611,7 @@ value,
 );
 
 }
+
 
 
 
