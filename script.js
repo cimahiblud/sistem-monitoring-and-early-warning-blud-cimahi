@@ -168,66 +168,97 @@ setInterval(updateClock,1000); updateClock();
 function statusClass(s){return s==="Normal"?"normal":s==="Waspada"?"warning":"critical";}
 function solusi(status, unit){
 
-if(status==="Normal"){
-return "Parameter aman";
-}
+if(status === "Normal") return "Parameter aman";
 
-// ===== OPSI PER UNIT =====
-let opsiWaspada = [];
-let opsiKritis = [];
-
-if(unit==="pra"){
-opsiWaspada = [
-"Monitoring intensif",
-"Pembersihan saringan awal",
-"Observasi 30 menit"
-];
-
-opsiKritis = [
-"Hentikan aliran sementara",
-"Pembersihan total bak pra-sedimentasi",
-"Koordinasi supervisor"
-];
-}
-
-else if(unit==="reservoir"){
-opsiWaspada = [
-"Monitoring kadar klorin",
-"Pengecekan pompa distribusi",
-"Sampling ulang air"
-];
-
-opsiKritis = [
-"Isolasi reservoir",
-"Penambahan desinfektan",
-"Laporan ke kepala instalasi"
-];
-}
-
-else{
-opsiWaspada = [
-"Monitoring intensif",
-"Pemeriksaan unit"
-];
-
-opsiKritis = [
-"Tindakan darurat",
-"Koordinasi teknisi"
-];
-}
-
-// ===== RENDER DROPDOWN =====
-let opsi = status==="Waspada" ? opsiWaspada : opsiKritis;
-
-let warna = status==="Waspada" ? "#ffc107" : "#dc3545";
-
+// ================= PRA =================
+if(unit === "pra"){
+if(status === "Waspada"){
 return `
-<select style="background:${warna};font-weight:bold"
-onchange="saveSolusi(this,'${unit}','${status}')">
-<option value="">Pilih tindakan...</option>
-${opsi.map(o=>`<option>${o}</option>`).join("")}
+<select>
+<option>-- Pilih Tindakan --</option>
+<option>Pembersihan sampah inlet</option>
+<option>Monitoring turbidity tiap 30 menit</option>
+<option>Pengurangan debit masuk</option>
 </select>
 `;
+}
+if(status === "Kritis"){
+return `
+<select>
+<option>-- Pilih Tindakan --</option>
+<option>Penutupan sementara intake</option>
+<option>Pembersihan total saluran</option>
+<option>Koordinasi teknisi lapangan</option>
+</select>
+`;
+}
+}
+
+// ================= RESERVOIR =================
+if(unit === "reservoir"){
+if(status === "Waspada"){
+return `
+<select>
+<option>-- Pilih Tindakan --</option>
+<option>Penambahan klorin</option>
+<option>Monitoring pH</option>
+<option>Kontrol level air</option>
+</select>
+`;
+}
+if(status === "Kritis"){
+return `
+<select>
+<option>-- Pilih Tindakan --</option>
+<option>Shock chlorination</option>
+<option>Pengurasan reservoir</option>
+<option>Inspeksi kebocoran</option>
+</select>
+`;
+}
+}
+
+// ================= CLEARWELL =================
+if(unit === "clearwell"){
+if(status === "Waspada"){
+return `
+<select>
+<option>Monitoring TDS</option>
+<option>Penyesuaian filtrasi</option>
+</select>
+`;
+}
+if(status === "Kritis"){
+return `
+<select>
+<option>Flush sistem distribusi</option>
+<option>Hentikan distribusi sementara</option>
+</select>
+`;
+}
+}
+
+// ================= SED1 & SED2 =================
+if(unit === "sed1" || unit === "sed2"){
+if(status === "Waspada"){
+return `
+<select>
+<option>Monitoring flokulasi</option>
+<option>Penyesuaian dosis koagulan</option>
+</select>
+`;
+}
+if(status === "Kritis"){
+return `
+<select>
+<option>Penambahan koagulan maksimal</option>
+<option>Pemeriksaan sistem pengaduk</option>
+</select>
+`;
+}
+}
+
+return "-";
 }
 
 // ================= AUDIO ALARM =================
@@ -620,6 +651,7 @@ value,
 );
 
 }
+
 
 
 
