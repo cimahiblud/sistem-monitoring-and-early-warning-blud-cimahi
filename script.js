@@ -651,7 +651,7 @@ value,
 }
 
 function clearAllTables(){
-["pra","reservoir","clearwell","sed1","sed2"].forEach(id=>{
+["pra","reservoir","clearwell","sed1","sed2","filter1","filter2","filter3","filter4","filter5"].forEach(id=>{
 let body = document.getElementById(id+"-body");
 if(body) body.innerHTML="";
 });
@@ -684,3 +684,4 @@ window.onload = function(){
 clearAllTables();
 startMonitoring();
 };
+
