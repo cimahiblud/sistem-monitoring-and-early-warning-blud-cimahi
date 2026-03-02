@@ -130,7 +130,7 @@ tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Ti
 </div>
 
 </div>
-</div>`
+</div>`;
 
 // ================= TAB =================
 function openTab(evt, tabName){
@@ -611,6 +611,7 @@ value,
 );
 
 }
+
 
 
 
