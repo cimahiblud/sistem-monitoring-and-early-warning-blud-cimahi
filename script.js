@@ -378,12 +378,10 @@ if(document.visibilityState==="visible") startMonitoring();
 else stopMonitoring();
 });
 
-window.onload=function(){
-initAudio();
-loadSavedMonitoring();
-loadRealData();
-startMonitoring();
-};
+window.onload = function(){
+clearAllTables();
+startRealtime();
+}
 
 // ================= GOOGLE SHEET =================
 const sheetURL="https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
@@ -651,6 +649,34 @@ value,
 );
 
 }
+
+function clearAllTables(){
+["pra","reservoir","clearwell","sed1","sed2"].forEach(id=>{
+let body = document.getElementById(id+"-body");
+if(body) body.innerHTML="";
+});
+}
+
+let realtimeInterval;
+
+function startRealtime(){
+realtimeInterval = setInterval(()=>{
+generateRandomData();
+}, 3000);
+}
+
+function stopRealtime(){
+clearInterval(realtimeInterval);
+}
+
+document.addEventListener("visibilitychange", function(){
+if(document.hidden){
+stopRealtime();
+}else{
+startRealtime();
+}
+});
+
 
 
 
