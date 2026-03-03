@@ -360,29 +360,6 @@ if(tb.rows.length > 20){
 tb.deleteRow(20);
 }
 }
-// ================= MONITORING CONTROL =================
-let monitoringInterval=null;
-
-function startMonitoring(){
-if(monitoringInterval) return;
-monitoringInterval=setInterval(loadRealData,60000);
-}
-
-function stopMonitoring(){
-clearInterval(monitoringInterval);
-monitoringInterval=null;
-}
-
-document.addEventListener("visibilitychange", function(){
-if(document.visibilityState==="visible") startMonitoring();
-else stopMonitoring();
-});
-
-window.onload = function(){
-clearAllTables();
-startRealtime();
-}
-
 // ================= GOOGLE SHEET =================
 const sheetURL="https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
 
@@ -684,4 +661,5 @@ window.onload = function(){
 clearAllTables();
 startMonitoring();
 };
+
 
