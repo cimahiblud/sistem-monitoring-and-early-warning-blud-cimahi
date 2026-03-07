@@ -661,5 +661,15 @@ window.onload = function(){
 clearAllTables();
 startMonitoring();
 };
+// ================= STANDAR PARAMETER =================
+
+function openStandar(){
+document.getElementById("standarPopup").style.display="block";
+}
+
+function closeStandar(){
+document.getElementById("standarPopup").style.display="none";
+}
+
 
 
