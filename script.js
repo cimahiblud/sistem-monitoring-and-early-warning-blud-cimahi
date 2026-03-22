@@ -363,6 +363,60 @@ tb.deleteRow(20);
 // ================= GOOGLE SHEET =================
 const sheetURL="https://opensheet.elk.sh/1wdgeQFJiY9Eoutit2PyLUFOAdh7hkE1RlFz80zc-GAE/Sheet1";
 
+// ================= LOGIKA STATUS BERDASARKAN STANDAR =================
+
+function getStatusPra(turb, tds, ph, temp){
+
+let status = "Normal";
+
+// TURBIDITY
+if(turb > 40) return "Kritis";
+if(turb >= 31) status = "Waspada";
+
+// TDS
+if(tds > 600) return "Kritis";
+if(tds >= 501) status = "Waspada";
+
+// PH
+if(ph > 9) return "Kritis";
+if(ph >= 8.5) status = "Waspada";
+
+// SUHU
+if(temp > 30) return "Kritis";
+if(temp >= 28.5) status = "Waspada";
+
+return status;
+}
+
+function getStatusSedimentasi(turb, tds, ph, temp){
+
+let status = "Normal";
+
+// TURBIDITY
+if(turb >= 3) return "Kritis";
+if(turb >= 2.6) status = "Waspada";
+
+// TDS
+if(tds > 270) return "Kritis";
+if(tds >= 251) status = "Waspada";
+
+// PH
+if(ph > 9) return "Kritis";
+if(ph >= 8.5) status = "Waspada";
+
+// SUHU
+if(temp > 30) return "Kritis";
+if(temp >= 28.5) status = "Waspada";
+
+return status;
+}
+
+function getStatusReservoir(turb, tds, ph, temp){
+
+// sama seperti sedimentasi
+return getStatusSedimentasi(turb, tds, ph, temp);
+
+}
 async function loadRealData(){
 
 // ================= DUMMY MODE =================
@@ -405,37 +459,92 @@ if(data.length<1) return;
 
 let last=data[data.length-1];
 
+// ================= PRA =================
+let turbPra = parseFloat(last["TURBIDITY_PRA"]);
+let tdsPra = parseFloat(last["TDS_PRA"]);
+let phPra = parseFloat(last["PH_PRA"]);
+let tempPra = parseFloat(last["TEMP_PRA"]);
+
+let statusPra = getStatusPra(turbPra, tdsPra, phPra, tempPra);
+
 addRow("pra",[
-last["TURBIDITY_PRA"],
+turbPra,
 last["EC_PRA"],
-last["TEMP_PRA"],
-last["TDS_PRA"],
+tempPra,
+tdsPra,
 last["DEBIT_LS_PRA"],
 last["DEBIT_M3_PRA"]
-],"Normal");
+],statusPra);
+
+
+// ================= RESERVOIR =================
+let turbRes = parseFloat(last["TURBIDITY_RES"]);
+let tdsRes = parseFloat(last["TDS_RES"]);
+let phRes = parseFloat(last["PH_RES"]);
+let tempRes = parseFloat(last["TEMP_RES"]);
+
+let statusRes = getStatusReservoir(turbRes, tdsRes, phRes, tempRes);
 
 addRow("reservoir",[
-last["TURBIDITY_RES"],
-last["PH_RES"],
+turbRes,
+phRes,
 last["LEVEL_RES"],
-last["TEMP_RES"],
+tempRes,
 last["CL_RES"],
 last["DEBIT_LS_RES"],
 last["DEBIT_M3_RES"]
+],statusRes);
+
+
+// ================= SEDIMENTASI 1 =================
+let turbSed1 = parseFloat(last["TURBIDITY_SED1"]);
+let tdsSed1 = parseFloat(last["TDS_SED1"] || 0);
+let phSed1 = parseFloat(last["PH_SED1"]);
+let tempSed1 = parseFloat(last["TEMP_SED1"]);
+
+let statusSed1 = getStatusSedimentasi(turbSed1, tdsSed1, phSed1, tempSed1);
+
+addRow("sed1",[
+turbSed1,
+tempSed1,
+last["EC_SED1"],
+phSed1
+],statusSed1);
+
+
+// ================= SEDIMENTASI 2 =================
+let turbSed2 = parseFloat(last["TURBIDITY_SED2"]);
+let tdsSed2 = parseFloat(last["TDS_SED2"] || 0);
+let phSed2 = parseFloat(last["PH_SED2"]);
+let tempSed2 = parseFloat(last["TEMP_SED2"]);
+
+let statusSed2 = getStatusSedimentasi(turbSed2, tdsSed2, phSed2, tempSed2);
+
+addRow("sed2",[
+turbSed2,
+tempSed2,
+last["EC_SED2"],
+phSed2
+],statusSed2);
+
+
+// ================= CLEARWELL =================
+addRow("clearwell",[
+last["TDS_CLEAR"],
+last["TURBIDITY_CLEAR"],
+last["EC_CLEAR"]
 ],"Normal");
 
-addRow("clearwell",[last["TDS_CLEAR"],last["TURBIDITY_CLEAR"],last["EC_CLEAR"]],"Normal");
-addRow("sed1",[last["TURBIDITY_SED1"],last["TEMP_SED1"],last["EC_SED1"],last["PH_SED1"]],"Normal");
-addRow("sed2",[last["TURBIDITY_SED2"],last["TEMP_SED2"],last["EC_SED2"],last["PH_SED2"]],"Normal");
+
 // ================= FILTER =================
 addFilterRow("filter1",[last["WL_F1"],last["TEMP_F1"]],"Normal");
 addFilterRow("filter2",[last["WL_F2"],last["TEMP_F2"]],"Normal");
 addFilterRow("filter3",[last["WL_F3"],last["TEMP_F3"]],"Normal");
 addFilterRow("filter4",[last["WL_F4"],last["TEMP_F4"]],"Normal");
 addFilterRow("filter5",[last["WL_F5"],last["TEMP_F5"]],"Normal");
+
 }catch(err){
 console.log("Error load sheet:",err);
-}
 }
 
 // ================= STORAGE =================
