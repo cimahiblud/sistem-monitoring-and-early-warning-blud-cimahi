@@ -48,7 +48,7 @@ tb.deleteRow(tb.rows.length - 1);
 }
 }
 // ================= MODE =================
-let dummyMode = true; 
+let dummyMode = false; 
 // ================= TABLE =================
 function tableTemplate(id, headers){
 return `
