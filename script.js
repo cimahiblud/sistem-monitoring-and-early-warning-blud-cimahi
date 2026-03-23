@@ -546,7 +546,7 @@ addFilterRow("filter5",[last["WL_F5"],last["TEMP_F5"]],"Normal");
 }catch(err){
 console.log("Error load sheet:",err);
 }
-
+}
 // ================= STORAGE =================
 function loadSavedMonitoring(){
 let data=JSON.parse(localStorage.getItem("monitoringData"))||[];
@@ -779,6 +779,3 @@ document.getElementById("standarPopup").style.display="block";
 function closeStandar(){
 document.getElementById("standarPopup").style.display="none";
 }
-
-
-
