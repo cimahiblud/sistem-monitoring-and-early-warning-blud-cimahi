@@ -6,17 +6,12 @@ const parameterMap = {
 pra:[
 {name:"Turbidity",col:1},
 {name:"EC",col:2},
-{name:"Temp",col:3},
-{name:"TDS",col:4}
+{name:"Temp",col:3}
 ],
 reservoir:[
 {name:"Turbidity",col:1},
 {name:"pH",col:2},
-{name:"Level",col:3},
-{name:"Temp",col:4},
-{name:"Cl",col:5},
-{name:"Debit L/s",col:6},
-{name:"Debit m3",col:7}
+{name:"Temp",col:3}
 ],
 clearwell:[
 {name:"TDS",col:1},
@@ -61,11 +56,10 @@ return `
 document.getElementById("tables").innerHTML=
 tableTemplate("pra",[
 "Waktu","Turbidity","EC","Temp","TDS",
-"Debit L/s","Debit m3",
 "Status","Solusi","Tindakan Operator"
 ]) +
 tableTemplate("reservoir",[
-"Waktu","Turbidity","pH","Level","Temp","Cl",
+"Waktu","Turbidity","pH","Temp",
 "Status","Solusi","Tindakan Operator"
 ]) +
 tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
