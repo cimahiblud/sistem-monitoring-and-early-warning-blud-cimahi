@@ -414,129 +414,120 @@ function getVal(obj, key){
 }
 async function loadRealData(){
 
-// ================= DUMMY MODE =================
-if(dummyMode){
+if(dummyMode) return;
 
-// nilai random agar terlihat realistis
-let turbPra = (Math.random()*15).toFixed(2);
-let ecPra = (200 + Math.random()*200).toFixed(0);
-let tempPra = (25 + Math.random()*5).toFixed(1);
-let tdsPra = (100 + Math.random()*200).toFixed(0);
-let debitLS = (10 + Math.random()*5).toFixed(2);
-let debitM3 = (800 + Math.random()*200).toFixed(0);
+try{
+const res = await fetch(sheetURL);
+const data = await res.json();
+if(data.length < 1) return;
 
-// LOGIKA STATUS BERDASARKAN TURBIDITY
-let statusPra = "Normal";
-if(turbPra > 5) statusPra = "Waspada";
-if(turbPra > 10) statusPra = "Kritis";
+let last = data[data.length-1];
 
-addRow("pra",[turbPra,ecPra,tempPra,tdsPra,debitLS,debitM3],statusPra);
+// DEBUG (WAJIB cek sekali)
+console.log("KEY:", Object.keys(last));
 
-// reservoir dummy
-let turbRes = (Math.random()*10).toFixed(2);
-let statusRes = turbRes > 4 ? "Waspada" : "Normal";
-if(turbRes > 8) statusRes = "Kritis";
-
-addRow("reservoir",[turbRes,7.2,80,26,0.5,debitLS,debitM3],statusRes);
-
-addRow("clearwell",[120,2,250],"Normal");
-addRow("sed1",[4,26,200,7],"Normal");
-addRow("sed2",[4,26,200,7],"Normal");
-
-return; // hentikan supaya tidak fetch sheet
+// ================= HELPER =================
+function val(key){
+return parseFloat(last[key]) || 0;
 }
 
-// ================= REAL DATA =================
-try{
-const res=await fetch(sheetURL);
-const data=await res.json();
-if(data.length<1) return;
-
-let last=data[data.length-1];
-console.log(Object.keys(last));
 // ================= PRA =================
-let turbPra = getVal(last, "Pra-Sed_Turbid");
-let ecPra   = getVal(last, "Pra-Sed_EC");
-let tempPra = getVal(last, "Pra-Sed_Temp");
+let turbPra = val("Pra-Sed_Turbid");
+let ecPra   = val("Pra-Sed_EC");
+let tempPra = val("Pra-Sed_Temp");
 
-// TDS & pH belum ada → kasih default
-let tdsPra = 0;
-let phPra = 7;
-
-let statusPra = getStatusPra(turbPra, tdsPra, phPra, tempPra);
+let statusPra = getStatusPra(turbPra, 0, 7, tempPra);
 
 addRow("pra",[
 turbPra,
 ecPra,
 tempPra,
-tdsPra
+0
 ],statusPra);
 
 
 // ================= RESERVOIR =================
-let turbRes = getVal(last, "Reservoir_Turbid");
-let tempRes = getVal(last, "Reservoir_Temp") / 100;
-let phRes   = getVal(last, "Reservoir_Ph") / 100;
-let levelRes= getVal(last, "Reservoir_Wat-Level");
+let turbRes = val("Reservoir_Turbid");
+let tempRes = val("Reservoir_Temp") / 100;
+let phRes   = val("Reservoir_Ph") / 100;
 
-// karena tidak ada TDS, CL, debit → isi default
-let tdsRes = 0;
-let clRes = 0;
-let debitLS = 0;
-let debitM3 = 0;
+// VALIDASI biar tidak aneh
+if(tempRes > 100) tempRes = tempRes / 100;
+if(phRes > 14) phRes = phRes / 100;
 
-// status tetap pakai fungsi kamu
-let statusRes = getStatusReservoir(turbRes, tdsRes, phRes, tempRes);
+let statusRes = getStatusReservoir(turbRes, 0, phRes, tempRes);
 
+// ✅ HARUS SESUAI HEADER (3 DATA SAJA)
 addRow("reservoir",[
 turbRes,
 phRes,
-levelRes,
-tempRes,
-clRes,
-debitLS,
-debitM3
+tempRes
 ],statusRes);
 
 
-// ================= SEDIMENTASI 1 =================
-let turbSed = getVal(last, "Sedimen_Turbid");
-let ecSed   = getVal(last, "Sedimen_EC");
-let tempSed = getVal(last, "Sedimen_Temp");
-let phSed   = getVal(last, "Sedimen_ph");
+// ================= SEDIMENTASI =================
 
-// TDS belum ada
-let tdsSed = 0;
+let turbSed =
+val("Sedimen_Turbid") ||
+val("Sedimen _Turbid");
 
-let statusSed = getStatusSedimentasi(turbSed, tdsSed, phSed, tempSed);
+let ecSed =
+val("Sedimen_EC") ||
+val("Sedimen _EC");
+
+let tempSed =
+val("Sedimen_Temp") ||
+val("Sedimen _Temp");
+
+let phSed =
+val("Sedimen_ph") ||
+val("Sedimen _ph");
+
+let statusSed = getStatusSedimentasi(turbSed, 0, phSed, tempSed);
 
 addRow("sed1",[turbSed,tempSed,ecSed,phSed],statusSed);
 addRow("sed2",[turbSed,tempSed,ecSed,phSed],statusSed);
 
-// ================= CLEARWELL =================
-let ecClear   = getVal(last, "Clearwell_EC");
-let turbClear = getVal(last, "Clearwell_Turbid");
 
-// karena tidak ada TDS → isi dummy atau 0
-let tdsClear = 0;
+// ================= CLEARWELL =================
+let turbClear =
+val("Clearwell_Turbid") ||
+val("Clearwell _Turbid");
+
+let ecClear =
+val("Clearwell_EC") ||
+val("Clearwell _EC");
 
 addRow("clearwell",[
-tdsClear,
+0,
 turbClear,
 ecClear
 ],"Normal");
 
 
 // ================= FILTER =================
-addFilterRow("filter1",[
-getVal(last, "Filter1_Wat-level"),
-getVal(last, "Filter1_Temp")
-],"Normal");
 
-addFilterRow("filter4",[
-getVal(last, "Filter4_Wat-Level"),
-getVal(last, "Filter4_Temp")
-],"Normal");
+let f1_level =
+val("Filter1_Wat-level") ||
+val("Filter1_Wat_Level");
+
+let f1_temp =
+val("Filter1_Temp") ||
+val("Filter1 _Temp");
+
+addFilterRow("filter1",[f1_level,f1_temp],"Normal");
+
+
+let f4_level =
+val("Filter4_Wat-Level") ||
+val("Filter4_Wat_Level");
+
+let f4_temp =
+val("Filter4_Temp") ||
+val("Filter4 _Temp");
+
+addFilterRow("filter4",[f4_level,f4_temp],"Normal");
+
 
 }catch(err){
 console.log("Error load sheet:",err);
