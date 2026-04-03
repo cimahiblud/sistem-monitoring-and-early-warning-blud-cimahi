@@ -7,9 +7,7 @@ pra:[
 {name:"Turbidity",col:1},
 {name:"EC",col:2},
 {name:"Temp",col:3},
-{name:"TDS",col:4},
-{name:"Debit L/s",col:5},
-{name:"Debit m3",col:6}
+{name:"TDS",col:4}
 ],
 reservoir:[
 {name:"Turbidity",col:1},
@@ -68,7 +66,6 @@ tableTemplate("pra",[
 ]) +
 tableTemplate("reservoir",[
 "Waktu","Turbidity","pH","Level","Temp","Cl",
-"Debit L/s","Debit m3",
 "Status","Solusi","Tindakan Operator"
 ]) +
 tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
@@ -471,9 +468,7 @@ addRow("pra",[
 turbPra,
 last["EC_PRA"],
 tempPra,
-tdsPra,
-last["DEBIT_LS_PRA"],
-last["DEBIT_M3_PRA"]
+tdsPra
 ],statusPra);
 
 
