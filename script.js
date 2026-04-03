@@ -408,6 +408,10 @@ function getStatusReservoir(turb, tds, ph, temp){
 return getStatusSedimentasi(turb, tds, ph, temp);
 
 }
+// ================= SAFE GET VALUE =================
+function getVal(obj, key){
+  return parseFloat(obj[key]) || 0;
+}
 async function loadRealData(){
 
 // ================= DUMMY MODE =================
@@ -449,11 +453,11 @@ const data=await res.json();
 if(data.length<1) return;
 
 let last=data[data.length-1];
-
+console.log(Object.keys(last));
 // ================= PRA =================
-let turbPra = parseFloat(last["Pra-Sed_Turbid"])|| 0;
-let ecPra   = parseFloat(last["Pra-Sed_EC"])|| 0;
-let tempPra = parseFloat(last["Pra-Sed_Temp"])|| 0;
+let turbPra = getVal(last, "Pra-Sed_Turbid");
+let ecPra   = getVal(last, "Pra-Sed_EC");
+let tempPra = getVal(last, "Pra-Sed_Temp");
 
 // TDS & pH belum ada → kasih default
 let tdsPra = 0;
@@ -470,10 +474,10 @@ tdsPra
 
 
 // ================= RESERVOIR =================
-let turbRes = parseFloat(last["Reservoir_Turbid"]);
-let tempRes = parseFloat(last["Reservoir_Temp"]) / 100;
-let phRes   = parseFloat(last["Reservoir_Ph"]) / 100;
-let levelRes= parseFloat(last["Reservoir_Wat-Level"]);
+let turbRes = getVal(last, "Reservoir_Turbid");
+let tempRes = getVal(last, "Reservoir_Temp") / 100;
+let phRes   = getVal(last, "Reservoir_Ph") / 100;
+let levelRes= getVal(last, "Reservoir_Wat-Level");
 
 // karena tidak ada TDS, CL, debit → isi default
 let tdsRes = 0;
@@ -496,10 +500,10 @@ debitM3
 
 
 // ================= SEDIMENTASI 1 =================
-let turbSed = parseFloat(last["Sedimen_Turbid"]);
-let ecSed   = parseFloat(last["Sedimen_EC"]);
-let tempSed = parseFloat(last["Sedimen_Temp"]);
-let phSed   = parseFloat(last["Sedimen_ph"]);
+let turbSed = getVal(last, "Sedimen_Turbid");
+let ecSed   = getVal(last, "Sedimen_EC");
+let tempSed = getVal(last, "Sedimen_Temp");
+let phSed   = getVal(last, "Sedimen_ph");
 
 // TDS belum ada
 let tdsSed = 0;
@@ -510,8 +514,8 @@ addRow("sed1",[turbSed,tempSed,ecSed,phSed],statusSed);
 addRow("sed2",[turbSed,tempSed,ecSed,phSed],statusSed);
 
 // ================= CLEARWELL =================
-let ecClear   = parseFloat(last["Clearwell_EC"]);
-let turbClear = parseFloat(last["Clearwell_Turbid"]);
+let ecClear   = getVal(last, "Clearwell_EC");
+let turbClear = getVal(last, "Clearwell_Turbid");
 
 // karena tidak ada TDS → isi dummy atau 0
 let tdsClear = 0;
@@ -525,13 +529,13 @@ ecClear
 
 // ================= FILTER =================
 addFilterRow("filter1",[
-last["Filter1_Wat-level"],
-last["Filter1_Temp"]
+getVal(last, "Filter1_Wat-level"),
+getVal(last, "Filter1_Temp")
 ],"Normal");
 
 addFilterRow("filter4",[
-last["Filter4_Wat-Level"],
-last["Filter4_Temp"]
+getVal(last, "Filter4_Wat-Level"),
+getVal(last, "Filter4_Temp")
 ],"Normal");
 
 }catch(err){
@@ -770,4 +774,4 @@ document.getElementById("standarPopup").style.display="block";
 function closeStandar(){
 document.getElementById("standarPopup").style.display="none";
 }
-console.log(Object.keys(last));
+
