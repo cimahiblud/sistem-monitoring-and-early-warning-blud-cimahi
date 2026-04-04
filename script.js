@@ -691,6 +691,7 @@ text
 
 closeForm();
 }
+}
 function saveSolusi(selectElement, unit, status){
 
 let value = selectElement.value;
