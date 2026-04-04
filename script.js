@@ -1,7 +1,8 @@
 // ================= CHART GLOBAL =================
 let chartInstance = null;
-// ================= AUTO ACTION CACHE =================
+// ================= AUTO ACTION STATE =================
 let lastActionPerUnit = {};
+let lastStatusPerUnit = {};
 // ================= PARAMETER MAP =================
 const parameterMap = {
 pra:[
@@ -296,14 +297,21 @@ saveMonitoringData(id, values, status);
 
 let actionButton = "-";
 
-// cek apakah sudah pernah ada tindakan di unit ini
-if((status === "Waspada" || status === "Kritis") && lastActionPerUnit[id]){
-actionButton = lastActionPerUnit[id]; // auto isi dari sebelumnya
+if(
+(status === "Waspada" || status === "Kritis") &&
+lastActionPerUnit[id] &&
+lastStatusPerUnit[id] === status
+){
+actionButton = lastActionPerUnit[id];
 }
 else if(status === "Waspada" || status === "Kritis"){
 actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi Tindakan</button>";
 }
-
+// ================= RESET SAAT NORMAL =================
+if(status === "Normal"){
+lastActionPerUnit[id] = null;
+lastStatusPerUnit[id] = null;
+}
 tr.innerHTML="<td>"+waktu+"</td>"+
 values.map(v=>"<td>"+(v ?? "-")+"</td>").join("")+
 "<td class='"+statusClass(status)+"'>"+status+"</td>"+
@@ -428,12 +436,17 @@ if(data.length < 1) return;
 
 let last = data[data.length-1];
 
-// DEBUG (WAJIB cek sekali)
+// DEBUG sekali saja (boleh dihapus nanti)
 console.log("KEY:", Object.keys(last));
 
-// ================= HELPER =================
-function val(key){
-return parseFloat(last[key]) || 0;
+// helper fleksibel (anti typo & spasi)
+function val(...keys){
+for(let k of keys){
+if(last[k] !== undefined && last[k] !== ""){
+return parseFloat(last[k]) || 0;
+}
+}
+return 0;
 }
 
 // ================= PRA =================
@@ -443,12 +456,7 @@ let tempPra = val("Pra-Sed_Temp");
 
 let statusPra = getStatusPra(turbPra, 0, 7, tempPra);
 
-addRow("pra",[
-turbPra,
-ecPra,
-tempPra,
-0
-],statusPra);
+addRow("pra",[turbPra,ecPra,tempPra,0],statusPra);
 
 
 // ================= RESERVOIR =================
@@ -456,37 +464,21 @@ let turbRes = val("Reservoir_Turbid");
 let tempRes = val("Reservoir_Temp") / 100;
 let phRes   = val("Reservoir_Ph") / 100;
 
-// VALIDASI biar tidak aneh
-if(tempRes > 100) tempRes = tempRes / 100;
-if(phRes > 14) phRes = phRes / 100;
+// normalisasi
+if(tempRes > 100) tempRes /= 100;
+if(phRes > 14) phRes /= 100;
 
 let statusRes = getStatusReservoir(turbRes, 0, phRes, tempRes);
 
-// ✅ HARUS SESUAI HEADER (3 DATA SAJA)
-addRow("reservoir",[
-turbRes,
-phRes,
-tempRes
-],statusRes);
+// SESUAI HEADER (3 kolom)
+addRow("reservoir",[turbRes,phRes,tempRes],statusRes);
 
 
 // ================= SEDIMENTASI =================
-
-let turbSed =
-val("Sedimen_Turbid") ||
-val("Sedimen _Turbid");
-
-let ecSed =
-val("Sedimen_EC") ||
-val("Sedimen _EC");
-
-let tempSed =
-val("Sedimen_Temp") ||
-val("Sedimen _Temp");
-
-let phSed =
-val("Sedimen_ph") ||
-val("Sedimen _ph");
+let turbSed = val("Sedimen_Turbid","Sedimen _Turbid");
+let ecSed   = val("Sedimen_EC","Sedimen _EC");
+let tempSed = val("Sedimen_Temp","Sedimen _Temp");
+let phSed   = val("Sedimen_ph","Sedimen _ph");
 
 let statusSed = getStatusSedimentasi(turbSed, 0, phSed, tempSed);
 
@@ -495,44 +487,22 @@ addRow("sed2",[turbSed,tempSed,ecSed,phSed],statusSed);
 
 
 // ================= CLEARWELL =================
-let turbClear =
-val("Clearwell_Turbid") ||
-val("Clearwell _Turbid");
+let turbClear = val("Clearwell_Turbid","Clearwell _Turbid");
+let ecClear   = val("Clearwell_EC","Clearwell _EC");
 
-let ecClear =
-val("Clearwell_EC") ||
-val("Clearwell _EC");
-
-addRow("clearwell",[
-0,
-turbClear,
-ecClear
-],"Normal");
+addRow("clearwell",[0,turbClear,ecClear],"Normal");
 
 
 // ================= FILTER =================
-
-let f1_level =
-val("Filter1_Wat-level") ||
-val("Filter1_Wat_Level");
-
-let f1_temp =
-val("Filter1_Temp") ||
-val("Filter1 _Temp");
+let f1_level = val("Filter1_Wat-level","Filter1_Wat_Level");
+let f1_temp  = val("Filter1_Temp","Filter1 _Temp");
 
 addFilterRow("filter1",[f1_level,f1_temp],"Normal");
 
-
-let f4_level =
-val("Filter4_Wat-Level") ||
-val("Filter4_Wat_Level");
-
-let f4_temp =
-val("Filter4_Temp") ||
-val("Filter4 _Temp");
+let f4_level = val("Filter4_Wat-Level","Filter4_Wat_Level");
+let f4_temp  = val("Filter4_Temp","Filter4 _Temp");
 
 addFilterRow("filter4",[f4_level,f4_temp],"Normal");
-
 
 }catch(err){
 console.log("Error load sheet:",err);
@@ -691,11 +661,24 @@ document.getElementById("actionForm").style.display="none";
 
 function saveAction(){
 let text = document.getElementById("actionText").value;
+
 if(!text){
 alert("Isi tindakan dulu!");
 return;
 }
-
+// isi ke tabel
+selectedRow.cells[selectedRow.cells.length-1].innerHTML = text;
+// ================= SIMPAN UNTUK AUTO =================
+lastActionPerUnit[selectedUnit] = text;
+// ================= SAVE HISTORY =================
+saveToHistory(
+selectedUnit,
+selectedStatus,
+solusi(selectedStatus),
+text
+);
+closeForm();
+}
 selectedRow.cells[selectedRow.cells.length-1].innerHTML = text;
 // simpan tindakan terakhir per unit
 lastActionPerUnit[selectedUnit] = text;
@@ -770,5 +753,26 @@ document.getElementById("standarPopup").style.display="block";
 
 function closeStandar(){
 document.getElementById("standarPopup").style.display="none";
+}
+// ================= BackFill =================
+function backfillAction(unit, status, text){
+
+let tb = document.getElementById(unit + "-body");
+if(!tb) return;
+
+for(let i = 0; i < tb.rows.length; i++){
+
+let row = tb.rows[i];
+
+let rowStatus = row.cells[row.cells.length - 3].innerText;
+let actionCell = row.cells[row.cells.length - 1];
+
+if(
+rowStatus === status &&
+actionCell.innerHTML.includes("button")
+){
+actionCell.innerHTML = text;
+}
+}
 }
 
