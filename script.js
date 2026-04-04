@@ -666,22 +666,18 @@ if(!text){
 alert("Isi tindakan dulu!");
 return;
 }
+
 // isi ke tabel
 selectedRow.cells[selectedRow.cells.length-1].innerHTML = text;
+
 // ================= SIMPAN UNTUK AUTO =================
 lastActionPerUnit[selectedUnit] = text;
+lastStatusPerUnit[selectedUnit] = selectedStatus;
+
+// ================= BACKFILL (ISI YANG SEBELUMNYA) =================
+backfillAction(selectedUnit, selectedStatus, text);
+
 // ================= SAVE HISTORY =================
-saveToHistory(
-selectedUnit,
-selectedStatus,
-solusi(selectedStatus),
-text
-);
-closeForm();
-}
-selectedRow.cells[selectedRow.cells.length-1].innerHTML = text;
-// simpan tindakan terakhir per unit
-lastActionPerUnit[selectedUnit] = text;
 saveToHistory(
 selectedUnit,
 selectedStatus,
@@ -690,7 +686,6 @@ text
 );
 
 closeForm();
-}
 }
 function saveSolusi(selectElement, unit, status){
 
