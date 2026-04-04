@@ -1,6 +1,7 @@
 // ================= CHART GLOBAL =================
 let chartInstance = null;
-
+// ================= AUTO ACTION CACHE =================
+let lastActionPerUnit = {};
 // ================= PARAMETER MAP =================
 const parameterMap = {
 pra:[
@@ -295,7 +296,11 @@ saveMonitoringData(id, values, status);
 
 let actionButton = "-";
 
-if(status === "Waspada" || status === "Kritis"){
+// cek apakah sudah pernah ada tindakan di unit ini
+if((status === "Waspada" || status === "Kritis") && lastActionPerUnit[id]){
+actionButton = lastActionPerUnit[id]; // auto isi dari sebelumnya
+}
+else if(status === "Waspada" || status === "Kritis"){
 actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi Tindakan</button>";
 }
 
@@ -692,7 +697,8 @@ return;
 }
 
 selectedRow.cells[selectedRow.cells.length-1].innerHTML = text;
-
+// simpan tindakan terakhir per unit
+lastActionPerUnit[selectedUnit] = text;
 saveToHistory(
 selectedUnit,
 selectedStatus,
