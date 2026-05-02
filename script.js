@@ -450,9 +450,9 @@ return 0;
 }
 
 // ================= PRA =================
-let turbPra = val("Pra-Sed_Turbid");
-let ecPra   = val("Pra-Sed_EC");
-let tempPra = val("Pra-Sed_Temp");
+let turbPra = val("Pra-Sed_Turbid") / 100;
+let ecPra   = val("Pra-Sed_EC") / 100;
+let tempPra = val("Pra-Sed_Temp") / 100;
 
 let statusPra = getStatusPra(turbPra, 0, 7, tempPra);
 
@@ -460,7 +460,7 @@ addRow("pra",[turbPra,ecPra,tempPra,0],statusPra);
 
 
 // ================= RESERVOIR =================
-let turbRes = val("Reservoir_Turbid");
+let turbRes = val("Reservoir_Turbid") / 100;
 let tempRes = val("Reservoir_Temp") / 100;
 let phRes   = val("Reservoir_Ph") / 100;
 
@@ -475,10 +475,10 @@ addRow("reservoir",[turbRes,phRes,tempRes],statusRes);
 
 
 // ================= SEDIMENTASI =================
-let turbSed = val("Sedimen_Turbid","Sedimen _Turbid");
-let ecSed   = val("Sedimen_EC","Sedimen _EC");
-let tempSed = val("Sedimen_Temp","Sedimen _Temp");
-let phSed   = val("Sedimen_ph","Sedimen _ph");
+let turbSed = val("Sedimen_Turbid","Sedimen _Turbid") / 100;
+let ecSed   = val("Sedimen_EC","Sedimen _EC") / 100;
+let tempSed = val("Sedimen_Temp","Sedimen _Temp") / 100;
+let phSed   = val("Sedimen_ph","Sedimen _ph") / 100;
 
 let statusSed = getStatusSedimentasi(turbSed, 0, phSed, tempSed);
 
@@ -494,15 +494,15 @@ addRow("clearwell",[0,turbClear,ecClear],"Normal");
 
 
 // ================= FILTER =================
-let f1_level = val("Filter1_Wat-level","Filter1_Wat_Level");
-let f1_temp  = val("Filter1_Temp","Filter1 _Temp");
+let f1_level = val("Filter1_Wat-level","Filter1_Wat_Level") / 100;
+let f1_temp  = val("Filter1_Temp","Filter1 _Temp") / 100;
 
 addFilterRow("filter1",[f1_level,f1_temp],"Normal");
 
-let f4_level = val("Filter4_Wat-Level","Filter4_Wat_Level");
+let f4_level = val("Filter4_Wat-Level","Filter4_Wat_Level") / 100;
 let f4_temp  = val("Filter4_Temp","Filter4 _Temp");
 
-addFilterRow("filter4",[f4_level,f4_temp],"Normal");
+addFilterRow("filter4",[f4_level,f4_temp],"Normal") / 100;
 
 }catch(err){
 console.log("Error load sheet:",err);
