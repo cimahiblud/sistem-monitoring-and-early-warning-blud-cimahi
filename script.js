@@ -102,27 +102,28 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-// ================= STATUS =================
+// ================= STATUS CLASS =================
 function statusClass(s){ return s==="Normal"?"normal":s==="Waspada"?"warning":"critical"; }
 
+// ================= SOLUSI =================
 function solusi(status, unit){
   if(status === "Normal") return "Parameter aman";
 
   if(unit === "pra"){
     if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Pembersihan sampah inlet</option><option>Monitoring turbidity tiap 30 menit</option><option>Pengurangan debit masuk</option></select>`;
-    if(status === "Kritis") return `<select><option>-- Pilih Tindakan --</option><option>Penutupan sementara intake</option><option>Pembersihan total saluran</option><option>Koordinasi teknisi lapangan</option></select>`;
+    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Penutupan sementara intake</option><option>Pembersihan total saluran</option><option>Koordinasi teknisi lapangan</option></select>`;
   }
   if(unit === "reservoir"){
     if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Penambahan klorin</option><option>Monitoring pH</option><option>Kontrol level air</option></select>`;
-    if(status === "Kritis") return `<select><option>-- Pilih Tindakan --</option><option>Shock chlorination</option><option>Pengurasan reservoir</option><option>Inspeksi kebocoran</option></select>`;
+    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Shock chlorination</option><option>Pengurasan reservoir</option><option>Inspeksi kebocoran</option></select>`;
   }
   if(unit === "clearwell"){
     if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Monitoring TDS</option><option>Penyesuaian filtrasi</option></select>`;
-    if(status === "Kritis") return `<select><option>-- Pilih Tindakan --</option><option>Flush sistem distribusi</option><option>Hentikan distribusi sementara</option></select>`;
+    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Flush sistem distribusi</option><option>Hentikan distribusi sementara</option></select>`;
   }
   if(unit === "sed1" || unit === "sed2"){
     if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Monitoring flokulasi</option><option>Penyesuaian dosis koagulan</option></select>`;
-    if(status === "Kritis") return `<select><option>-- Pilih Tindakan --</option><option>Penambahan koagulan maksimal</option><option>Pemeriksaan sistem pengaduk</option></select>`;
+    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Penambahan koagulan maksimal</option><option>Pemeriksaan sistem pengaduk</option></select>`;
   }
   return "-";
 }
@@ -189,7 +190,7 @@ function addRow(id, values, status, waktu=null){
   limitRows(id);
 
   let sumId = null;
-  if(id==="pra") sumId="sum-pra";
+  if(id==="pra")       sumId="sum-pra";
   else if(id==="reservoir") sumId="sum-res";
   else if(id==="clearwell") sumId="sum-clear";
   else if(id==="sed1") sumId="sum-sed1";
@@ -218,37 +219,54 @@ function addFilterRow(id, values, status){
 }
 
 // ================= GOOGLE SHEET =================
-const sheetURL = "https://opensheet.elk.sh/1Ubreg7aI5_YOfasyBefWloo-SHB5YIaGr_aqXLUdnUI/Sheet1";
+const sheetURL = "https://opensheet.elk.sh/14i8S-08Yg3Vn_WFA6Ny_4uJ2stTzL9rvrTP0Qt0bCmQ/Sheet1";
 
 // ================= STATUS LOGIC =================
+// Sesuai Tabel 4.1
+
+// PRA-SEDIMENTASI
 function getStatusPra(turb, tds, ph, temp){
   let status = "Normal";
-  if(turb > 40) return "Kritis";
-  if(turb >= 31) status = "Waspada";
-  if(tds > 600) return "Kritis";
-  if(tds >= 501) status = "Waspada";
-  if(ph > 9) return "Kritis";
-  if(ph >= 8.5) status = "Waspada";
-  if(temp > 30) return "Kritis";
+  if(turb > 40)   return "Kritis";
+  if(turb >= 31)  status = "Waspada";
+  if(tds > 600)   return "Kritis";
+  if(tds >= 501)  status = "Waspada";
+  if(ph > 9)      return "Kritis";
+  if(ph >= 8.5)   status = "Waspada";
+  if(temp > 30)   return "Kritis";
   if(temp >= 28.5) status = "Waspada";
   return status;
 }
 
+// SEDIMENTASI & RESERVOIR (parameter sama)
 function getStatusSedimentasi(turb, tds, ph, temp){
   let status = "Normal";
-  if(turb >= 3) return "Kritis";
+  if(turb >= 3)   return "Kritis";
   if(turb >= 2.6) status = "Waspada";
-  if(tds > 270) return "Kritis";
-  if(tds >= 251) status = "Waspada";
-  if(ph > 9) return "Kritis";
-  if(ph >= 8.5) status = "Waspada";
-  if(temp > 30) return "Kritis";
+  if(tds > 270)   return "Kritis";
+  if(tds >= 251)  status = "Waspada";
+  if(ph > 9)      return "Kritis";
+  if(ph >= 8.5)   status = "Waspada";
+  if(temp > 30)   return "Kritis";
   if(temp >= 28.5) status = "Waspada";
   return status;
 }
 
 function getStatusReservoir(turb, tds, ph, temp){
   return getStatusSedimentasi(turb, tds, ph, temp);
+}
+
+// CLEARWELL — samakan dengan sedimentasi
+function getStatusClearwell(turb, tds, ph, temp){
+  return getStatusSedimentasi(turb, tds, ph, temp);
+}
+
+// FILTER — penentu hanya suhu (sesuai sensor yang terpasang)
+// Normal: 27 - 28.4°C | Waspada: 28.5 - 29.9°C | Kritis: >= 30°C
+function getStatusFilter(temp){
+  if(temp >= 30)   return "Kritis";
+  if(temp >= 28.5) return "Waspada";
+  return "Normal";
 }
 
 // ================= LOAD REAL DATA =================
@@ -267,42 +285,49 @@ async function loadRealData(){
       return 0;
     }
 
+    // PRA-SEDIMENTASI
     let turbPra = val("Pra-Sed_Turbid");
     let ecPra   = val("Pra-Sed_EC");
     let tempPra = val("Pra-Sed_Temp");
     let statusPra = getStatusPra(turbPra, 0, 7, tempPra);
-    addRow("pra",[turbPra,ecPra,tempPra,0],statusPra);
+    addRow("pra", [turbPra, ecPra, tempPra, 0], statusPra);
 
+    // RESERVOIR — nilai langsung (tidak dikali/bagi 100)
     let turbRes = val("Reservoir_Turbid");
-    let tempRes = val("Reservoir_Temp") / 100;
-    let phRes   = val("Reservoir_Ph") / 100;
-    if(tempRes > 100) tempRes /= 100;
-    if(phRes > 14) phRes /= 100;
+    let tempRes = val("Reservoir_Temp");
+    let phRes   = val("Reservoir_Ph");
     let statusRes = getStatusReservoir(turbRes, 0, phRes, tempRes);
-    addRow("reservoir",[turbRes,phRes,tempRes],statusRes);
+    addRow("reservoir", [turbRes, phRes, tempRes], statusRes);
 
-    let turbSed = val("Sedimen_Turbid","Sedimen _Turbid");
-    let ecSed   = val("Sedimen_EC","Sedimen _EC");
-    let tempSed = val("Sedimen_Temp","Sedimen _Temp");
-    let phSed   = val("Sedimen_ph","Sedimen _ph");
+    // SEDIMENTASI
+    let turbSed = val("Sedimen_Turbid", "Sedimen _Turbid");
+    let ecSed   = val("Sedimen_EC",     "Sedimen _EC");
+    let tempSed = val("Sedimen_Temp",   "Sedimen _Temp");
+    let phSed   = val("Sedimen_ph",     "Sedimen _ph");
     let statusSed = getStatusSedimentasi(turbSed, 0, phSed, tempSed);
-    addRow("sed1",[turbSed,tempSed,ecSed,phSed],statusSed);
-    addRow("sed2",[turbSed,tempSed,ecSed,phSed],statusSed);
+    addRow("sed1", [turbSed, tempSed, ecSed, phSed], statusSed);
+    addRow("sed2", [turbSed, tempSed, ecSed, phSed], statusSed);
 
-    let turbClear = val("Clearwell_Turbid","Clearwell _Turbid");
-    let ecClear   = val("Clearwell_EC","Clearwell _EC");
-    addRow("clearwell",[0,turbClear,ecClear],"Normal");
+    // CLEARWELL
+    let turbClear = val("Clearwell_Turbid", "Clearwell _Turbid");
+    let ecClear   = val("Clearwell_EC",     "Clearwell _EC");
+    let statusClear = getStatusClearwell(turbClear, 0, 7, 28);
+    addRow("clearwell", [0, turbClear, ecClear], statusClear);
 
-    let f1_level = val("Filter1_Wat-level","Filter1_Wat_Level");
-    let f1_temp  = val("Filter1_Temp","Filter1 _Temp");
-    addFilterRow("filter1",[f1_level,f1_temp],"Normal");
-
-    let f4_level = val("Filter4_Wat-Level","Filter4_Wat_Level");
-    let f4_temp  = val("Filter4_Temp","Filter4 _Temp");
-    addFilterRow("filter4",[f4_level,f4_temp],"Normal");
+    // FILTER 1-5 — status berdasarkan suhu saja
+    for(let n = 1; n <= 5; n++){
+      let levelKey = n === 4
+        ? "Filter4_Wat-Level"
+        : `Filter${n}_Wat-level`;
+      let tempKey  = `Filter${n}_Temp`;
+      let fl = val(levelKey);
+      let ft = val(tempKey);
+      let fs = getStatusFilter(ft);
+      addFilterRow("filter"+n, [fl, ft], fs);
+    }
 
   }catch(err){
-    console.log("Error load sheet:",err);
+    console.log("Error load sheet:", err);
   }
 }
 
@@ -372,12 +397,12 @@ function updateParameterOptions(){
 
 function generateChart(){
   let unit = document.getElementById("chartUnit").value;
-  let col = parseInt(document.getElementById("chartParameter").value);
+  let col  = parseInt(document.getElementById("chartParameter").value);
   let rows = document.getElementById(unit+"-body").rows;
   if(!col){ alert("Pilih parameter dulu"); return; }
   if(rows.length === 0){ alert("Belum ada data"); return; }
   let labels = [];
-  let data = [];
+  let data   = [];
   for(let i = rows.length-1; i >= 0; i--){
     labels.push(rows[i].cells[0].innerText);
     data.push(parseFloat(rows[i].cells[col].innerText));
@@ -395,7 +420,7 @@ function generateChart(){
         tension:0.3
       }]
     },
-    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}
+    options:{responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true}}}
   });
 }
 
@@ -418,16 +443,16 @@ function downloadData(){
 }
 
 // ================= ACTION FORM =================
-let selectedRow = null;
-let selectedUnit = null;
+let selectedRow    = null;
+let selectedUnit   = null;
 let selectedStatus = null;
 
 function openForm(button, unit, status){
-  selectedRow = button.parentElement.parentElement;
-  selectedUnit = unit;
+  selectedRow    = button.parentElement.parentElement;
+  selectedUnit   = unit;
   selectedStatus = status;
   document.getElementById("formInfo").innerText = "Unit: "+unit.toUpperCase()+" | Status: "+status;
-  document.getElementById("actionText").value = "";
+  document.getElementById("actionText").value   = "";
   document.getElementById("actionForm").style.display = "block";
 }
 
@@ -448,9 +473,9 @@ function backfillAction(unit, status, text){
   let tb = document.getElementById(unit+"-body");
   if(!tb) return;
   for(let i = 0; i < tb.rows.length; i++){
-    let row = tb.rows[i];
+    let row       = tb.rows[i];
     let rowStatus = row.cells[row.cells.length-3].innerText;
-    let actionCell = row.cells[row.cells.length-1];
+    let actionCell= row.cells[row.cells.length-1];
     if(rowStatus === status && actionCell.innerHTML.includes("button")){
       actionCell.innerHTML = text;
     }
@@ -484,30 +509,38 @@ function pickZone(){
   return "kritis";
 }
 
+// PRA-SEDIMENTASI
+// Normal: Turb 4-30 | TDS 100-500 | pH 6.5-8.4 | Suhu 27-28.4
+// Waspada: Turb 31-39 | TDS 501-599 | pH 8.5-8.9 | Suhu 28.5-29.9
+// Kritis : Turb >=40  | TDS >=600   | pH >=9     | Suhu >=30
 function dummyPra(){
   let zone = pickZone();
   let turb, tds, ph, temp, ec;
   if(zone === "normal"){
-    turb = rand(4, 30);
+    turb = rand(4,   30);
     tds  = rand(100, 500);
     ph   = rand(6.5, 8.4, 1);
-    temp = rand(27, 28.4, 1);
+    temp = rand(27,  28.4, 1);
   } else if(zone === "waspada"){
-    turb = rand(31, 39);
+    turb = rand(31,  39);
     tds  = rand(501, 599);
     ph   = rand(8.5, 8.9, 1);
-    temp = rand(28.5, 29.9, 1);
+    temp = rand(28.5,29.9, 1);
   } else {
-    turb = rand(40, 60);
+    turb = rand(40,  60);
     tds  = rand(600, 700);
     ph   = rand(9.0, 10.0, 1);
-    temp = rand(30, 32, 1);
+    temp = rand(30,  32,  1);
   }
-  ec = rand(200, 800); // EC: estimasi, tidak ada di tabel
+  ec = rand(200, 800);
   let status = getStatusPra(turb, tds, ph, temp);
   addRow("pra", [turb, ec, temp, tds], status);
 }
 
+// SEDIMENTASI
+// Normal: Turb <2.5 | TDS 120-250 | pH 6.5-8.4 | Suhu 27-28.4
+// Waspada: Turb 2.6-2.9 | TDS 251-269 | pH 8.5-8.9 | Suhu 28.5-29.9
+// Kritis : Turb >=3   | TDS >=270   | pH >=9     | Suhu >=30
 function dummySedimentasi(unit){
   let zone = pickZone();
   let turb, tds, ph, temp, ec;
@@ -515,23 +548,24 @@ function dummySedimentasi(unit){
     turb = rand(0.5, 2.4);
     tds  = rand(120, 250);
     ph   = rand(6.5, 8.4, 1);
-    temp = rand(27, 28.4, 1);
+    temp = rand(27,  28.4, 1);
   } else if(zone === "waspada"){
     turb = rand(2.6, 2.9);
     tds  = rand(251, 269);
     ph   = rand(8.5, 8.9, 1);
-    temp = rand(28.5, 29.9, 1);
+    temp = rand(28.5,29.9, 1);
   } else {
     turb = rand(3.0, 5.0);
     tds  = rand(270, 350);
     ph   = rand(9.0, 10.0, 1);
-    temp = rand(30, 32, 1);
+    temp = rand(30,  32,  1);
   }
   ec = rand(150, 500);
   let status = getStatusSedimentasi(turb, tds, ph, temp);
   addRow(unit, [turb, temp, ec, ph], status);
 }
 
+// RESERVOIR — parameter sama dengan sedimentasi
 function dummyReservoir(){
   let zone = pickZone();
   let turb, tds, ph, temp;
@@ -539,22 +573,23 @@ function dummyReservoir(){
     turb = rand(0.5, 2.4);
     tds  = rand(120, 250);
     ph   = rand(6.5, 8.4, 1);
-    temp = rand(27, 28.4, 1);
+    temp = rand(27,  28.4, 1);
   } else if(zone === "waspada"){
     turb = rand(2.6, 2.9);
     tds  = rand(251, 269);
     ph   = rand(8.5, 8.9, 1);
-    temp = rand(28.5, 29.9, 1);
+    temp = rand(28.5,29.9, 1);
   } else {
     turb = rand(3.0, 5.0);
     tds  = rand(270, 350);
     ph   = rand(9.0, 10.0, 1);
-    temp = rand(30, 32, 1);
+    temp = rand(30,  32,  1);
   }
   let status = getStatusReservoir(turb, tds, ph, temp);
   addRow("reservoir", [turb, ph, temp], status);
 }
 
+// CLEARWELL — samakan parameter dengan sedimentasi
 function dummyClearwell(){
   let zone = pickZone();
   let tds, turb, ec;
@@ -571,14 +606,16 @@ function dummyClearwell(){
     turb = rand(3.0, 5.0);
     ec   = rand(500, 600);
   }
-  let status = getStatusSedimentasi(turb, tds, 7, 28);
+  let status = getStatusClearwell(turb, tds, 7, 28);
   addRow("clearwell", [tds, turb, ec], status);
 }
 
+// FILTER — status ditentukan hanya oleh suhu
+// Normal: 27 - 28.4°C | Waspada: 28.5 - 29.9°C | Kritis: >= 30°C
 function dummyFilter(n){
   let level = rand(20, 100, 1);
-  let temp  = rand(27, 30, 1);
-  let status = temp >= 30 ? "Kritis" : temp >= 28.5 ? "Waspada" : "Normal";
+  let temp  = rand(27, 31, 1);  // range sedikit lebih lebar agar kritis bisa muncul
+  let status = getStatusFilter(temp);
   addFilterRow("filter"+n, [level, temp], status);
 }
 
