@@ -249,7 +249,7 @@ function addFilterRow(id, values, status){
 }
 
 // ================= GOOGLE SHEET =================
-const sheetURL = "https://opensheet.elk.sh/1Ubreg7aI5_YOfasyBefWloo-SHB5YIaGr_aqXLUdnUI/Sheet1";
+const sheetURL = "https://opensheet.elk.sh/14i8S-08Yg3Vn_WFA6Ny_4uJ2stTzL9rvrTP0Qt0bCmQ/Sheet1";
 
 // ================= STATUS LOGIC =================
 // Sesuai Tabel 4.1
