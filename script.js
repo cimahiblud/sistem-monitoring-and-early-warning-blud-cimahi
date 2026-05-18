@@ -8,31 +8,32 @@ let lastStatusPerUnit = {};
 // ================= PARAMETER MAP =================
 const parameterMap = {
   pra:[
-    {name:"Turbidity",col:1},
-    {name:"EC",col:2},
-    {name:"Temp",col:3}
+    {name:"Turbidity", col:1},
+    {name:"EC",        col:2},
+    {name:"Temp",      col:3},
+    {name:"TDS",       col:4}
   ],
   reservoir:[
-    {name:"Turbidity",col:1},
-    {name:"pH",col:2},
-    {name:"Temp",col:3}
+    {name:"Turbidity", col:1},
+    {name:"pH",        col:2},
+    {name:"Temp",      col:3}
   ],
   clearwell:[
-    {name:"TDS",col:1},
-    {name:"Turbidity",col:2},
-    {name:"EC",col:3}
+    {name:"TDS",       col:1},
+    {name:"Turbidity", col:2},
+    {name:"EC",        col:3}
   ],
   sed1:[
-    {name:"Turbidity",col:1},
-    {name:"Temp",col:2},
-    {name:"EC",col:3},
-    {name:"pH",col:4}
+    {name:"Turbidity", col:1},
+    {name:"Temp",      col:2},
+    {name:"EC",        col:3},
+    {name:"pH",        col:4}
   ],
   sed2:[
-    {name:"Turbidity",col:1},
-    {name:"Temp",col:2},
-    {name:"EC",col:3},
-    {name:"pH",col:4}
+    {name:"Turbidity", col:1},
+    {name:"Temp",      col:2},
+    {name:"EC",        col:3},
+    {name:"pH",        col:4}
   ]
 };
 
@@ -47,7 +48,7 @@ function limitRows(id){
 
 // ================= MODE =================
 // Ganti ke false untuk menggunakan data real dari Google Sheets
-let dummyMode = false;
+let dummyMode = true;
 
 // ================= TABLE TEMPLATES =================
 function tableTemplate(id, headers){
@@ -169,11 +170,40 @@ function addRow(id, values, status, waktu=null){
     saveMonitoringData(id, values, status);
   }
 
+  // Hitung berapa baris dengan status sama yang sudah ada
+  let sameStatusCount = 0;
+  for(let i = 0; i < tb.rows.length; i++){
+    let rowStatus = tb.rows[i].cells[tb.rows[i].cells.length - 3]?.innerText;
+    if(rowStatus === status) sameStatusCount++;
+  }
+
   let actionButton = "-";
-  if((status === "Waspada" || status === "Kritis") && lastActionPerUnit[id] && lastStatusPerUnit[id] === status){
-    actionButton = lastActionPerUnit[id];
-  } else if(status === "Waspada" || status === "Kritis"){
-    actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi Tindakan</button>";
+  if(status === "Waspada" || status === "Kritis"){
+    if(lastActionPerUnit[id] && lastStatusPerUnit[id] === status){
+      // Sudah ada tindakan tersimpan untuk status ini → langsung isi otomatis
+      actionButton = lastActionPerUnit[id];
+    } else if(sameStatusCount >= 1){
+      // Sudah ada >= 1 baris status sama sebelumnya tapi belum ada tindakan → cek apakah ada yg sudah diisi
+      let existingAction = null;
+      for(let i = 0; i < tb.rows.length; i++){
+        let row = tb.rows[i];
+        let rowStatus = row.cells[row.cells.length - 3]?.innerText;
+        let actionCell = row.cells[row.cells.length - 1];
+        if(rowStatus === status && actionCell && !actionCell.innerHTML.includes("button") && actionCell.innerText.trim() !== "-" && actionCell.innerText.trim() !== ""){
+          existingAction = actionCell.innerText.trim();
+          break;
+        }
+      }
+      if(existingAction){
+        actionButton = existingAction;
+        lastActionPerUnit[id] = existingAction;
+        lastStatusPerUnit[id] = status;
+      } else {
+        actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi Tindakan</button>";
+      }
+    } else {
+      actionButton = "<button onclick=\"openForm(this,'"+id+"','"+status+"')\">Isi Tindakan</button>";
+    }
   }
 
   if(status === "Normal"){
@@ -190,11 +220,11 @@ function addRow(id, values, status, waktu=null){
   limitRows(id);
 
   let sumId = null;
-  if(id==="pra")       sumId="sum-pra";
+  if(id==="pra")            sumId="sum-pra";
   else if(id==="reservoir") sumId="sum-res";
   else if(id==="clearwell") sumId="sum-clear";
-  else if(id==="sed1") sumId="sum-sed1";
-  else if(id==="sed2") sumId="sum-sed2";
+  else if(id==="sed1")      sumId="sum-sed1";
+  else if(id==="sed2")      sumId="sum-sed2";
 
   if(sumId){
     let labelMap = {pra:"PRA-SED",reservoir:"RESERVOIR",clearwell:"CLEARWELL",sed1:"SED-1",sed2:"SED-2"};
@@ -219,7 +249,7 @@ function addFilterRow(id, values, status){
 }
 
 // ================= GOOGLE SHEET =================
-const sheetURL = "https://opensheet.elk.sh/14i8S-08Yg3Vn_WFA6Ny_4uJ2stTzL9rvrTP0Qt0bCmQ/Sheet1";
+const sheetURL = "https://opensheet.elk.sh/1Ubreg7aI5_YOfasyBefWloo-SHB5YIaGr_aqXLUdnUI/Sheet1";
 
 // ================= STATUS LOGIC =================
 // Sesuai Tabel 4.1
@@ -428,17 +458,46 @@ function generateChart(){
 function downloadData(){
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
   if(data.length === 0){ alert("Tidak ada data"); return; }
-  let limited = data.slice(0, 500);
-  let rows = [["Waktu","Unit","Param1","Param2","Param3","Param4","Param5","Param6","Param7","Status"]];
-  limited.forEach(d=>{
-    let row = [new Date(d.waktu).toLocaleString("id-ID"), d.unit, ...d.values];
-    while(row.length < 9) row.push("");
-    row.push(d.status);
-    rows.push(row);
-  });
+
+  const headerMap = {
+    pra:       ["Waktu","Unit","Turbidity (NTU)","EC","Temp (°C)","TDS","Status"],
+    reservoir: ["Waktu","Unit","Turbidity (NTU)","pH","Temp (°C)","Status"],
+    clearwell: ["Waktu","Unit","TDS","Turbidity (NTU)","EC","Status"],
+    sed1:      ["Waktu","Unit","Turbidity (NTU)","Temp (°C)","EC","pH","Status"],
+    sed2:      ["Waktu","Unit","Turbidity (NTU)","Temp (°C)","EC","pH","Status"],
+  };
+
+  // Kelompokkan per unit
+  const units = ["pra","reservoir","clearwell","sed1","sed2"];
   let wb = XLSX.utils.book_new();
-  let ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "Monitoring");
+
+  units.forEach(unit => {
+    let unitData = data.filter(d => d.unit === unit).slice(0, 500);
+    if(unitData.length === 0) return;
+
+    let headers = headerMap[unit] || ["Waktu","Unit","Param1","Param2","Param3","Param4","Status"];
+    let rows = [headers];
+
+    unitData.forEach(d => {
+      let row = [new Date(d.waktu).toLocaleString("id-ID"), d.unit, ...d.values, d.status];
+      rows.push(row);
+    });
+
+    let ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Auto lebar kolom
+    let colWidths = headers.map(h => ({ wch: Math.max(h.length + 2, 14) }));
+    ws['!cols'] = colWidths;
+
+    let sheetName = unit === "sed1" ? "Sedimentasi 1"
+                  : unit === "sed2" ? "Sedimentasi 2"
+                  : unit === "pra"  ? "Pra-Sedimentasi"
+                  : unit === "clearwell" ? "Clearwell"
+                  : "Reservoir";
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
   XLSX.writeFile(wb, "Monitoring_Data.xlsx");
 }
 
