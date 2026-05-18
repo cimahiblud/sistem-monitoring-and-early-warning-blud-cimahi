@@ -48,7 +48,7 @@ function limitRows(id){
 
 // ================= MODE =================
 // Ganti ke false untuk menggunakan data real dari Google Sheets
-let dummyMode = true;
+let dummyMode = false;
 
 // ================= TABLE TEMPLATES =================
 function tableTemplate(id, headers){
