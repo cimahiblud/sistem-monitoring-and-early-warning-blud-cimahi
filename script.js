@@ -246,6 +246,14 @@ function addFilterRow(id, values, status){
     "<td class='"+statusClass(status)+"'>"+status+"</td>" +
     "<td>"+solusi(status)+"</td>";
   if(tb.rows.length > 20) tb.deleteRow(20);
+    // Tambahkan ini — update summary box filter
+  let n = id.replace("filter",""); // ambil angka 1-5
+  let sumEl = document.getElementById("sum-filter"+n);
+  if(sumEl){
+    sumEl.className = "summary-box "+statusClass(status);
+    sumEl.innerText = "Filter "+n+" : "+status;
+    triggerAlarm(status);
+  }
 }
 
 // ================= GOOGLE SHEET =================
