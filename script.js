@@ -257,13 +257,13 @@ const sheetURL = "https://opensheet.elk.sh/14i8S-08Yg3Vn_WFA6Ny_4uJ2stTzL9rvrTP0
 // PRA-SEDIMENTASI
 function getStatusPra(turb, tds, ph, temp){
   let status = "Normal";
-  if(turb > 40)   return "Kritis";
+  if(turb >= 40)   return "Kritis";
   if(turb >= 31)  status = "Waspada";
-  if(tds > 600)   return "Kritis";
+  if(tds >= 600)   return "Kritis";
   if(tds >= 501)  status = "Waspada";
-  if(ph > 9)      return "Kritis";
+  if(ph >= 9)      return "Kritis";
   if(ph >= 8.5)   status = "Waspada";
-  if(temp > 30)   return "Kritis";
+  if(temp >= 30)   return "Kritis";
   if(temp >= 28.5) status = "Waspada";
   return status;
 }
@@ -273,11 +273,11 @@ function getStatusSedimentasi(turb, tds, ph, temp){
   let status = "Normal";
   if(turb >= 3)   return "Kritis";
   if(turb >= 2.6) status = "Waspada";
-  if(tds > 270)   return "Kritis";
+  if(tds >= 270)   return "Kritis";
   if(tds >= 251)  status = "Waspada";
-  if(ph > 9)      return "Kritis";
+  if(ph >= 9)      return "Kritis";
   if(ph >= 8.5)   status = "Waspada";
-  if(temp > 30)   return "Kritis";
+  if(temp >= 30)   return "Kritis";
   if(temp >= 28.5) status = "Waspada";
   return status;
 }
