@@ -327,8 +327,9 @@ async function loadRealData(){
     let turbPra = val("Pra-Sed_Turbid");
     let ecPra   = val("Pra-Sed_EC");
     let tempPra = val("Pra-Sed_Temp");
-    let statusPra = getStatusPra(turbPra, 0, 7, tempPra);
-    addRow("pra", [turbPra, ecPra, tempPra, 0], statusPra);
+    let tdsPra  = val("Pra-Sed_TDS");
+    let statusPra = getStatusPra(turbPra, tdsPra, 7, tempPra);
+    addRow("pra", [turbPra, ecPra, tempPra, tdsPra], statusPra);
 
     // RESERVOIR — nilai langsung (tidak dikali/bagi 100)
     let turbRes = val("Reservoir_Turbid");
@@ -349,8 +350,9 @@ async function loadRealData(){
     // CLEARWELL
     let turbClear = val("Clearwell_Turbid", "Clearwell _Turbid");
     let ecClear   = val("Clearwell_EC",     "Clearwell _EC");
-    let statusClear = getStatusClearwell(turbClear, 0, 7, 28);
-    addRow("clearwell", [0, turbClear, ecClear], statusClear);
+    let tdsClear  = val("Clearwell_TDS", "Clearwell _TDS");
+    let statusClear = getStatusClearwell(turbClear, tdsClear, 7, 28);
+    addRow("clearwell", [tdsClear, turbClear, ecClear], statusClear);
 
     // FILTER 1-5 — status berdasarkan suhu saja
     for(let n = 1; n <= 5; n++){
