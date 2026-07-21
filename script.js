@@ -106,27 +106,97 @@ updateClock();
 // ================= STATUS CLASS =================
 function statusClass(s){ return s==="Normal"?"normal":s==="Waspada"?"warning":"critical"; }
 
-// ================= SOLUSI =================
-function solusi(status, unit){
-  if(status === "Normal") return "Parameter aman";
+// ================= TINDAKAN =================
+function tindakan(status, unit){
+
+  if(status === "Normal"){
+    return "Parameter aman";
+  }
+
+  let options = "";
 
   if(unit === "pra"){
-    if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Pembersihan sampah inlet</option><option>Monitoring turbidity tiap 30 menit</option><option>Pengurangan debit masuk</option></select>`;
-    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Penutupan sementara intake</option><option>Pembersihan total saluran</option><option>Koordinasi teknisi lapangan</option></select>`;
+
+    if(status === "Waspada"){
+      options = `
+        <option>Pembersihan sampah inlet</option>
+        <option>Monitoring turbidity tiap 30 menit</option>
+        <option>Pengurangan debit masuk</option>
+      `;
+    }
+
+    if(status === "Kritis"){
+      options = `
+        <option>Penutupan sementara intake</option>
+        <option>Pembersihan total saluran</option>
+        <option>Koordinasi teknisi lapangan</option>
+      `;
+    }
   }
+
   if(unit === "reservoir"){
-    if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Penambahan klorin</option><option>Monitoring pH</option><option>Kontrol level air</option></select>`;
-    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Shock chlorination</option><option>Pengurasan reservoir</option><option>Inspeksi kebocoran</option></select>`;
+
+    if(status === "Waspada"){
+      options = `
+        <option>Penambahan klorin</option>
+        <option>Monitoring pH</option>
+        <option>Kontrol level air</option>
+      `;
+    }
+
+    if(status === "Kritis"){
+      options = `
+        <option>Shock chlorination</option>
+        <option>Pengurasan reservoir</option>
+        <option>Inspeksi kebocoran</option>
+      `;
+    }
   }
+
   if(unit === "clearwell"){
-    if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Monitoring TDS</option><option>Penyesuaian filtrasi</option></select>`;
-    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Flush sistem distribusi</option><option>Hentikan distribusi sementara</option></select>`;
+
+    if(status === "Waspada"){
+      options = `
+        <option>Monitoring TDS</option>
+        <option>Penyesuaian filtrasi</option>
+      `;
+    }
+
+    if(status === "Kritis"){
+      options = `
+        <option>Flush sistem distribusi</option>
+        <option>Hentikan distribusi sementara</option>
+      `;
+    }
   }
+
   if(unit === "sed1" || unit === "sed2"){
-    if(status === "Waspada") return `<select><option>-- Pilih Tindakan --</option><option>Monitoring flokulasi</option><option>Penyesuaian dosis koagulan</option></select>`;
-    if(status === "Kritis")  return `<select><option>-- Pilih Tindakan --</option><option>Penambahan koagulan maksimal</option><option>Pemeriksaan sistem pengaduk</option></select>`;
+
+    if(status === "Waspada"){
+      options = `
+        <option>Monitoring flokulasi</option>
+        <option>Penyesuaian dosis koagulan</option>
+      `;
+    }
+
+    if(status === "Kritis"){
+      options = `
+        <option>Penambahan koagulan maksimal</option>
+        <option>Pemeriksaan sistem pengaduk</option>
+      `;
+    }
   }
-  return "-";
+
+  if(!options){
+    return "-";
+  }
+
+  return `
+    <select onchange="simpanTindakan(this)">
+      <option value="">-- Pilih Tindakan --</option>
+      ${options}
+    </select>
+  `;
 }
 
 // ================= AUDIO ALARM =================
