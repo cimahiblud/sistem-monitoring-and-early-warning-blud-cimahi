@@ -37,6 +37,69 @@ const parameterMap = {
   ]
 };
 
+// ================= URUTAN PARAMETER PER TABEL (untuk pewarnaan sel) =================
+const colParams = {
+  pra:       ["Turbidity", "EC",   "Temp", "TDS"],
+  reservoir: ["Turbidity", "pH",   "Temp"],
+  clearwell: ["TDS",       "Turbidity", "EC"],
+  sed1:      ["Turbidity", "Temp", "EC",   "pH"],
+  sed2:      ["Turbidity", "Temp", "EC",   "pH"],
+  filter:    ["WaterLevel","Temp"]
+};
+
+// ================= THRESHOLD PARAMETER (mengacu Tabel 4.1) =================
+// Nilai >= kritis  -> Kritis
+// Nilai >= waspada -> Waspada
+// Selain itu       -> Normal
+// EC & Water Level tidak punya threshold -> tidak diwarnai
+const paramThresholds = {
+  pra: {
+    Turbidity: {waspada: 31,   kritis: 40},
+    TDS:       {waspada: 501,  kritis: 600},
+    pH:        {waspada: 8.5,  kritis: 9},
+    Temp:      {waspada: 28.5, kritis: 30}
+  },
+  reservoir: {
+    Turbidity: {waspada: 2.6,  kritis: 3},
+    TDS:       {waspada: 251,  kritis: 270},
+    pH:        {waspada: 8.5,  kritis: 9},
+    Temp:      {waspada: 28.5, kritis: 30}
+  },
+  clearwell: {
+    Turbidity: {waspada: 2.6,  kritis: 3},
+    TDS:       {waspada: 251,  kritis: 270},
+    pH:        {waspada: 8.5,  kritis: 9},
+    Temp:      {waspada: 28.5, kritis: 30}
+  },
+  sed1: {
+    Turbidity: {waspada: 2.6,  kritis: 3},
+    TDS:       {waspada: 251,  kritis: 270},
+    pH:        {waspada: 8.5,  kritis: 9},
+    Temp:      {waspada: 28.5, kritis: 30}
+  },
+  sed2: {
+    Turbidity: {waspada: 2.6,  kritis: 3},
+    TDS:       {waspada: 251,  kritis: 270},
+    pH:        {waspada: 8.5,  kritis: 9},
+    Temp:      {waspada: 28.5, kritis: 30}
+  },
+  filter: {
+    Temp: {waspada: 28.5, kritis: 30}
+  }
+};
+
+// Kembalikan class CSS untuk sel nilai parameter berdasarkan unit + nama parameter + nilai
+function paramClass(unit, paramName, value){
+  if(value === null || value === undefined || value === "-" ) return "";
+  const v = parseFloat(value);
+  if(isNaN(v)) return "";
+  const t = paramThresholds[unit] && paramThresholds[unit][paramName];
+  if(!t) return ""; // EC / Water Level dsb tidak diwarnai
+  if(v >= t.kritis)  return "critical";
+  if(v >= t.waspada) return "warning";
+  return "normal";
+}
+
 // ================= LIMIT ROWS =================
 function limitRows(id){
   let tb = document.getElementById(id+"-body");
@@ -62,11 +125,11 @@ function tableTemplate(id, headers){
 }
 
 document.getElementById("tables").innerHTML =
-  tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
+  tableTemplate("pra",      ["Waktu","Turbidity","EC","Temp","TDS","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("sed1",     ["Waktu","Turbidity","Temp","EC","pH","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("sed2",     ["Waktu","Turbidity","Temp","EC","pH","Status","Tindakan","Catatan Tindakan Operator"]) +
   `<div id="filter" class="tab-content">
     <div class="filter-wrapper">
       ${[1,2,3,4,5].map(n=>`
@@ -211,8 +274,16 @@ function addRow(id, values, status, waktu=null){
     lastStatusPerUnit[id] = null;
   }
 
+  // Bangun sel nilai parameter dengan class pewarnaan sesuai kondisi
+  let params = colParams[id] || [];
+  let valuesHtml = values.map((v, i) => {
+    let pname = params[i];
+    let cls   = paramClass(id, pname, v);
+    return "<td class='"+cls+"'>"+(v ?? "-")+"</td>";
+  }).join("");
+
   tr.innerHTML = "<td>"+waktu+"</td>" +
-    values.map(v=>"<td>"+(v ?? "-")+"</td>").join("") +
+    valuesHtml +
     "<td class='"+statusClass(status)+"'>"+status+"</td>" +
     "<td>"+solusi(status,id)+"</td>" +
     "<td>"+actionButton+"</td>";
@@ -241,12 +312,22 @@ function addFilterRow(id, values, status){
   if(!tb) return;
   let tr = tb.insertRow(0);
   let waktu = new Date().toLocaleTimeString('id-ID');
+
+  // Filter: values = [WaterLevel, Temp] → hanya Temp yang punya threshold warna
+  let params = colParams.filter;
+  let valuesHtml = values.map((v, i) => {
+    let pname = params[i];
+    let cls   = paramClass("filter", pname, v);
+    return "<td class='"+cls+"'>"+(v ?? "-")+"</td>";
+  }).join("");
+
   tr.innerHTML = "<td>"+waktu+"</td>" +
-    values.map(v=>"<td>"+(v ?? "-")+"</td>").join("") +
+    valuesHtml +
     "<td class='"+statusClass(status)+"'>"+status+"</td>" +
     "<td>"+solusi(status)+"</td>";
   if(tb.rows.length > 20) tb.deleteRow(20);
-    // Tambahkan ini — update summary box filter
+
+  // Update summary box filter
   let n = id.replace("filter",""); // ambil angka 1-5
   let sumEl = document.getElementById("sum-filter"+n);
   if(sumEl){
@@ -579,9 +660,6 @@ function pickZone(){
 }
 
 // PRA-SEDIMENTASI
-// Normal: Turb 4-30 | TDS 100-500 | pH 6.5-8.4 | Suhu 27-28.4
-// Waspada: Turb 31-39 | TDS 501-599 | pH 8.5-8.9 | Suhu 28.5-29.9
-// Kritis : Turb >=40  | TDS >=600   | pH >=9     | Suhu >=30
 function dummyPra(){
   let zone = pickZone();
   let turb, tds, ph, temp, ec;
@@ -607,9 +685,6 @@ function dummyPra(){
 }
 
 // SEDIMENTASI
-// Normal: Turb <2.5 | TDS 120-250 | pH 6.5-8.4 | Suhu 27-28.4
-// Waspada: Turb 2.6-2.9 | TDS 251-269 | pH 8.5-8.9 | Suhu 28.5-29.9
-// Kritis : Turb >=3   | TDS >=270   | pH >=9     | Suhu >=30
 function dummySedimentasi(unit){
   let zone = pickZone();
   let turb, tds, ph, temp, ec;
@@ -680,7 +755,6 @@ function dummyClearwell(){
 }
 
 // FILTER — status ditentukan hanya oleh suhu
-// Normal: 27 - 28.4°C | Waspada: 28.5 - 29.9°C | Kritis: >= 30°C
 function dummyFilter(n){
   let level = rand(20, 100, 1);
   let temp  = rand(27, 31, 1);  // range sedikit lebih lebar agar kritis bisa muncul
