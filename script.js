@@ -157,7 +157,61 @@ function triggerAlarm(status){
     setTimeout(()=>playBeep(0.5, 900), 600);
   }
 }
+// ================= CELL COLOR =================
+// Memberi warna pada nilai parameter sesuai kondisinya
 
+function colorCell(value, unit, param){
+  let v = parseFloat(value);
+  if(isNaN(v)) return "";
+
+  let normal = "", waspada = "", kritis = "";
+
+  // PRA-SEDIMENTASI
+  if(unit === "pra"){
+    if(param === "turb"){
+      if(v >= 40)   return "background:#dc3545;color:#fff"; // Kritis
+      if(v >= 31)   return "background:#ffc107;color:#000"; // Waspada
+    }
+    if(param === "tds"){
+      if(v >= 600)  return "background:#dc3545;color:#fff";
+      if(v >= 501)  return "background:#ffc107;color:#000";
+    }
+    if(param === "temp"){
+      if(v >= 30)   return "background:#dc3545;color:#fff";
+      if(v >= 28.5) return "background:#ffc107;color:#000";
+    }
+  }
+
+  // SEDIMENTASI, RESERVOIR, CLEARWELL
+  if(unit==="sed1"||unit==="sed2"||unit==="reservoir"||unit==="clearwell"){
+    if(param === "turb"){
+      if(v >= 3)    return "background:#dc3545;color:#fff";
+      if(v >= 2.6)  return "background:#ffc107;color:#000";
+    }
+    if(param === "tds"){
+      if(v >= 270)  return "background:#dc3545;color:#fff";
+      if(v >= 251)  return "background:#ffc107;color:#000";
+    }
+    if(param === "ph"){
+      if(v >= 9)    return "background:#dc3545;color:#fff";
+      if(v >= 8.5)  return "background:#ffc107;color:#000";
+    }
+    if(param === "temp"){
+      if(v >= 30)   return "background:#dc3545;color:#fff";
+      if(v >= 28.5) return "background:#ffc107;color:#000";
+    }
+  }
+
+  // FILTER
+  if(unit === "filter"){
+    if(param === "temp"){
+      if(v >= 30)   return "background:#dc3545;color:#fff";
+      if(v >= 28.5) return "background:#ffc107;color:#000";
+    }
+  }
+
+  return "background:#d4edda;color:#000"; // Normal — hijau muda
+}
 // ================= ADD ROW =================
 function addRow(id, values, status, waktu=null){
   let tb = document.getElementById(id+"-body");
@@ -211,11 +265,23 @@ function addRow(id, values, status, waktu=null){
     lastStatusPerUnit[id] = null;
   }
 
-  tr.innerHTML = "<td>"+waktu+"</td>" +
-    values.map(v=>"<td>"+(v ?? "-")+"</td>").join("") +
-    "<td class='"+statusClass(status)+"'>"+status+"</td>" +
-    "<td>"+solusi(status,id)+"</td>" +
-    "<td>"+actionButton+"</td>";
+// Tentukan urutan parameter sesuai unit
+const paramOrder = {
+  pra:       ["turb","ec","temp","tds"],
+  reservoir: ["turb","ph","temp"],
+  clearwell: ["tds","turb","ec"],
+  sed1:      ["turb","temp","ec","ph"],
+  sed2:      ["turb","temp","ec","ph"],
+};
+
+let params = paramOrder[id] || [];
+
+tr.innerHTML = "<td>"+waktu+"</td>" +
+  values.map((v, i) => {
+    let param = params[i] || "";
+    let style = colorCell(v, id, param);
+    return "<td style='"+style+"'>"+(v ?? "-")+"</td>";
+  }).join("") +
 
   limitRows(id);
 
