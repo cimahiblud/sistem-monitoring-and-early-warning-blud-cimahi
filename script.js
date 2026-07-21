@@ -157,60 +157,85 @@ function triggerAlarm(status){
     setTimeout(()=>playBeep(0.5, 900), 600);
   }
 }
-// ================= CELL COLOR =================
-// Memberi warna pada nilai parameter sesuai kondisinya
-
 function colorCell(value, unit, param){
+
   let v = parseFloat(value);
+
   if(isNaN(v)) return "";
 
-  let normal = "", waspada = "", kritis = "";
-
-  // PRA-SEDIMENTASI
+  // ================= PRA-SEDIMENTASI =================
   if(unit === "pra"){
+
     if(param === "turb"){
-      if(v >= 40)   return "background:#dc3545;color:#fff"; // Kritis
-      if(v >= 31)   return "background:#ffc107;color:#000"; // Waspada
+      if(v >= 40) return "background:#dc3545;color:#fff";
+      if(v >= 31) return "background:#ffc107;color:#000";
     }
+
     if(param === "tds"){
-      if(v >= 600)  return "background:#dc3545;color:#fff";
-      if(v >= 501)  return "background:#ffc107;color:#000";
+      if(v >= 600) return "background:#dc3545;color:#fff";
+      if(v >= 501) return "background:#ffc107;color:#000";
     }
+
     if(param === "temp"){
-      if(v >= 30)   return "background:#dc3545;color:#fff";
+      if(v >= 30) return "background:#dc3545;color:#fff";
       if(v >= 28.5) return "background:#ffc107;color:#000";
     }
   }
 
-  // SEDIMENTASI, RESERVOIR, CLEARWELL
-  if(unit==="sed1"||unit==="sed2"||unit==="reservoir"||unit==="clearwell"){
+  // ================= SEDIMENTASI =================
+  if(unit === "sed1" || unit === "sed2"){
+
     if(param === "turb"){
-      if(v >= 3)    return "background:#dc3545;color:#fff";
-      if(v >= 2.6)  return "background:#ffc107;color:#000";
+      if(v >= 3) return "background:#dc3545;color:#fff";
+      if(v >= 2.6) return "background:#ffc107;color:#000";
     }
-    if(param === "tds"){
-      if(v >= 270)  return "background:#dc3545;color:#fff";
-      if(v >= 251)  return "background:#ffc107;color:#000";
-    }
+
     if(param === "ph"){
-      if(v >= 9)    return "background:#dc3545;color:#fff";
-      if(v >= 8.5)  return "background:#ffc107;color:#000";
+      if(v >= 9) return "background:#dc3545;color:#fff";
+      if(v >= 8.5) return "background:#ffc107;color:#000";
     }
+
     if(param === "temp"){
-      if(v >= 30)   return "background:#dc3545;color:#fff";
+      if(v >= 30) return "background:#dc3545;color:#fff";
       if(v >= 28.5) return "background:#ffc107;color:#000";
     }
   }
 
-  // FILTER
-  if(unit === "filter"){
+  // ================= RESERVOIR =================
+  if(unit === "reservoir"){
+
+    if(param === "turb"){
+      if(v >= 3) return "background:#dc3545;color:#fff";
+      if(v >= 2.6) return "background:#ffc107;color:#000";
+    }
+
+    if(param === "ph"){
+      if(v >= 9) return "background:#dc3545;color:#fff";
+      if(v >= 8.5) return "background:#ffc107;color:#000";
+    }
+
     if(param === "temp"){
-      if(v >= 30)   return "background:#dc3545;color:#fff";
+      if(v >= 30) return "background:#dc3545;color:#fff";
       if(v >= 28.5) return "background:#ffc107;color:#000";
     }
   }
 
-  return "background:#d4edda;color:#000"; // Normal — hijau muda
+  // ================= CLEARWELL =================
+  if(unit === "clearwell"){
+
+    if(param === "tds"){
+      if(v >= 270) return "background:#dc3545;color:#fff";
+      if(v >= 251) return "background:#ffc107;color:#000";
+    }
+
+    if(param === "turb"){
+      if(v >= 3) return "background:#dc3545;color:#fff";
+      if(v >= 2.6) return "background:#ffc107;color:#000";
+    }
+  }
+
+  // NORMAL
+  return "background:#d4edda;color:#000";
 }
 // ================= ADD ROW =================
 function addRow(id, values, status, waktu=null){
@@ -276,14 +301,24 @@ const paramOrder = {
 
 let params = paramOrder[id] || [];
 
-tr.innerHTML = "<td>"+waktu+"</td>" +
+tr.innerHTML =
+  "<td>"+waktu+"</td>" +
+
   values.map((v, i) => {
     let param = params[i] || "";
     let style = colorCell(v, id, param);
+
     return "<td style='"+style+"'>"+(v ?? "-")+"</td>";
+
   }).join("") +
 
-  limitRows(id);
+  "<td class='"+statusClass(status)+"'>"+status+"</td>" +
+
+  "<td>"+actionButton+"</td>" +
+
+  "<td>-</td>";
+
+limitRows(id);
 
   let sumId = null;
   if(id==="pra")            sumId="sum-pra";
