@@ -62,11 +62,11 @@ function tableTemplate(id, headers){
 }
 
 document.getElementById("tables").innerHTML =
-  tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
-  tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Solusi","Tindakan Operator"]) +
+  tableTemplate("pra",["Waktu","Turbidity","EC","Temp","TDS","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("sed1",["Waktu","Turbidity","Temp","EC","pH","Status","Tindakan","Catatan Tindakan Operator"]) +
+  tableTemplate("sed2",["Waktu","Turbidity","Temp","EC","pH","Status","Tindakan","Catatan Tindakan Operator"]) +
   `<div id="filter" class="tab-content">
     <div class="filter-wrapper">
       ${[1,2,3,4,5].map(n=>`
