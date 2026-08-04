@@ -389,6 +389,7 @@ function getStatusFilter(temp){
 }
 
 // ================= LOAD REAL DATA =================
+let lastFetchedWaktu = null;
 async function loadRealData(){
   if(dummyMode) return;
   try{
@@ -396,7 +397,9 @@ async function loadRealData(){
     const data = await res.json();
     if(data.length < 1) return;
     let last = data[data.length-1];
-
+    let waktuBaru = (last["Waktu"] || last["waktu"] || "").toString().trim();
+if(waktuBaru && waktuBaru === lastFetchedWaktu) return;
+lastFetchedWaktu = waktuBaru;
     function val(...keys){
       for(let k of keys){
         if(last[k] !== undefined && last[k] !== "") return parseFloat(last[k]) || 0;
@@ -780,7 +783,7 @@ function startMonitoring(){
   monitoringInterval = setInterval(()=>{
     if(dummyMode) loadDummyData();
     else loadRealData();
-  }, 60000);
+  }, 10000);
 }
 
 function stopMonitoring(){
