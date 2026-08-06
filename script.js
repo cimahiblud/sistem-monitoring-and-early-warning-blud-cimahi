@@ -948,4 +948,3 @@ window.onload = function(){
   else loadRealData();
   startMonitoring();
 };
-```
