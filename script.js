@@ -613,7 +613,7 @@ function downloadData(){
   XLSX.writeFile(wb, "Monitoring_Data_5W1H.xlsx");
 }
 
-// ================= FORM 5W1H (MENGGANTIKAN actionForm) =================
+// ================= PERBAIKAN 1 & 2 IMPLEMENTATION =================
 let selectedRow    = null;
 let selectedUnit   = null;
 let selectedStatus = null;
@@ -626,36 +626,44 @@ function openForm(button, unit, status){
   let formEl = document.getElementById("actionForm");
   if(!formEl) return;
 
-  let paramsList = parameterMap[unit] || [];
-  let affectedParam = paramsList[0]?.name || "Turbidity";
-  let unitThresh = paramThresholds[unit] || {};
-  
-  for(let i=0; i<selectedRow.cells.length-3; i++){
-    let cellVal = selectedRow.cells[i+1]?.innerText;
-    let pName = paramsList[i]?.name;
-    if(pName && unitThresh[pName]){
-      let vNum = parseFloat(cellVal);
-      if(vNum >= unitThresh[pName].waspada){
-        affectedParam = pName;
-      }
-    }
+  // PERBAIKAN 1: Jika status "Normal", kembalikan "-"
+  if(status === "Normal"){
+    formEl.style.display = "none";
+    return;
   }
 
-  let options = (penyebabKejadianMap[unit] && penyebabKejadianMap[unit][affectedParam]) || [
-    "Lonjakan parameter di luar ambang batas normal",
-    "Gangguan mekanis / elektrikal pada unit",
-    "Fluktuasi kualitas air baku mendadak"
-  ];
+  // Jika status "Waspada" atau "Kritis", ambil semua pilihan dari objek penyebabKejadianMap[unit]
+  let mapData = penyebabKejadianMap[unit];
+  let options = [];
 
-  let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+  if(mapData && typeof mapData === "object" && Object.keys(mapData).length > 0){
+    let uniqueSet = new Set();
+    Object.values(mapData).forEach(arr => {
+      if(Array.isArray(arr)){
+        arr.forEach(item => uniqueSet.add(item));
+      }
+    });
+    options = Array.from(uniqueSet);
+  }
 
+  // Jika penyebabMap[unit] tidak ada atau kosong, kembalikan "-"
+  let dropdownHtml = "-";
+  if(options.length > 0){
+    let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+    dropdownHtml = `<select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>`;
+  }
+
+  let paramsList = parameterMap[unit] || [];
+  let affectedParam = paramsList[0]?.name || "Turbidity";
+
+  // PERBAIKAN 2: Hapus nilai default pada f_lokasi, f_analis, dan f_pj. Hanya f_waktu yang terisi waktu saat ini.
   formEl.innerHTML = `
     <h3>Form Catatan Operator & Analisis 5W1H</h3>
     <p id="formInfo">Unit: ${unit.toUpperCase()} | Status: ${status}</p>
     
     <div style="margin-bottom:10px;">
       <label style="font-weight:bold;font-size:12px;display:block;margin-bottom:3px;">Pilih Penyebab Kejadian:</label>
-      <select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>
+      ${dropdownHtml}
     </div>
 
     <div style="font-size:11px; margin-bottom:6px; font-weight:bold; color:#007bff;">Struktur Pertanyaan 5W1H:</div>
@@ -672,27 +680,30 @@ function openForm(button, unit, status){
 
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">3. Di mana lokasi tindakan perbaikan?</label>
-      <input type="text" id="f_q3" value="Instalasi WTP Unit ${unit.toUpperCase()} - Zona Utama" style="width:100%;padding:5px;font-size:11px;">
+      <input type="text" id="f_lokasi" placeholder="Masukkan lokasi perbaikan..." style="width:100%;padding:5px;font-size:11px;">
     </div>
 
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">4. Kapan tindakan tersebut dilakukan?</label>
-      <input type="text" id="f_q4" value="${new Date().toLocaleString("id-ID")}" style="width:100%;padding:5px;font-size:11px;">
+      <input type="text" id="f_waktu" value="${new Date().toISOString().slice(0,16)}" style="width:100%;padding:5px;font-size:11px;">
     </div>
 
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">5. Operator: <input type="text" id="f_q5" value="Ahmad Operator" style="width:70%;padding:3px;font-size:11px;"></label>
+      <label style="font-size:11px;">5. Operator:</label>
+      <input type="text" id="f_q5" placeholder="Nama operator..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">6. Analis: <input type="text" id="f_q6" value="Ir. Budi" style="width:75%;padding:3px;font-size:11px;"></label>
+      <label style="font-size:11px;">6. Analis / Supervisor:</label>
+      <input type="text" id="f_analis" placeholder="Nama analis..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">7. Manajer: <input type="text" id="f_q7" value="Dr. Hendra" style="width:73%;padding:3px;font-size:11px;"></label>
+      <label style="font-size:11px;">7. Penanggung Jawab / Manajer:</label>
+      <input type="text" id="f_pj" placeholder="Nama penanggung jawab..." style="width:100%;padding:3px;font-size:11px;">
     </div>
 
     <br>
-    <button onclick="saveAction()">Simpan</button>
-    <button onclick="closeForm()">Batal</button>
+    <button onclick="saveAction()" style="background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">Simpan</button>
+    <button onclick="closeForm()" style="background:#6c757d;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;margin-left:5px;">Batal</button>
   `;
   formEl.style.display = "block";
 }
@@ -703,21 +714,30 @@ function closeForm(){
 }
 
 function saveAction(){
-  let penyebab = document.getElementById("selectPenyebab")?.value || "-";
+  let selectEl = document.getElementById("selectPenyebab");
+  let penyebab = selectEl ? selectEl.value : "-";
   let q1 = document.getElementById("f_q1")?.value || "";
   let q2 = document.getElementById("f_q2")?.value || "";
-  let q3 = document.getElementById("f_q3")?.value || "";
-  let q4 = document.getElementById("f_q4")?.value || "";
-  let q5 = document.getElementById("f_q5")?.value || "";
-  let q6 = document.getElementById("f_q6")?.value || "";
-  let q7 = document.getElementById("f_q7")?.value || "";
+  let lokasi = document.getElementById("f_lokasi")?.value || "";
+  let waktuTindakan = document.getElementById("f_waktu")?.value || "";
+  let operator = document.getElementById("f_q5")?.value || "";
+  let analis = document.getElementById("f_analis")?.value || "";
+  let pj = document.getElementById("f_pj")?.value || "";
 
   if(!q2){
     alert("Langkah penanganan (Q2) wajib diisi!");
     return;
   }
 
-  let form5w1hData = { q1_parameter: q1, q2_langkah: q2, q3_lokasi: q3, q4_waktu: q4, q5_operator: q5, q6_analis: q6, q7_manajer: q7 };
+  let form5w1hData = { 
+    q1_parameter: q1, 
+    q2_langkah: q2, 
+    q3_lokasi: lokasi, 
+    q4_waktu: waktuTindakan, 
+    q5_operator: operator, 
+    q6_analis: analis, 
+    q7_manajer: pj 
+  };
 
   selectedRow.cells[selectedRow.cells.length-2].innerText = penyebab;
   selectedRow.cells[selectedRow.cells.length-1].innerHTML = `<button onclick="openForm(this,'${selectedUnit}','${selectedStatus}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
