@@ -1,3 +1,6 @@
+Berikut adalah kode JavaScript (`script.js`) utuh yang sudah direvisi sesuai permintaan Anda dan siap langsung di-copy-paste ke repository GitHub Pages Anda:
+
+```javascript
 // ================= CHART GLOBAL =================
 let chartInstance = null;
 
@@ -704,11 +707,9 @@ function openForm(button, unit, status){
 
   document.getElementById("modalUnitStatus").innerText = "Unit: " + unit.toUpperCase() + " | Status: " + status;
   
-  // Isi dropdown penyebab berdasarkan opsi unit
   let selectEl = document.getElementById("selectPenyebab");
   selectEl.innerHTML = "";
   
-  // Tentukan parameter mana yang terpengaruh
   let paramsList = parameterMap[unit] || [];
   let affectedParam = paramsList[0]?.name || "Turbidity";
   let unitThresh = paramThresholds[unit] || {};
@@ -737,7 +738,6 @@ function openForm(button, unit, status){
     selectEl.appendChild(optEl);
   });
 
-  // Isi default 5W1H
   document.getElementById("f_q1").value = affectedParam + " pada Unit " + unit.toUpperCase() + " bernilai " + status;
   document.getElementById("f_q2").value = "";
   document.getElementById("f_q3").value = "Instalasi WTP Unit " + unit.toUpperCase() + " - Zona Utama";
@@ -768,17 +768,13 @@ function saveAction5W1H(){
 
   let form5w1hData = { q1_parameter: q1, q2_langkah: q2, q3_lokasi: q3, q4_waktu: q4, q5_operator: q5, q6_analis: q6, q7_manajer: q7 };
 
-  // Update tampilan tabel baris
   selectedRow.cells[selectedRow.cells.length-2].innerText = penyebab;
   selectedRow.cells[selectedRow.cells.length-1].innerHTML = `<button onclick="openForm(this,'${selectedUnit}','${selectedStatus}')" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
 
-  // Simpan ke history dan localStorage
   saveToHistory(selectedUnit, selectedStatus, penyebab, form5w1hData);
   
-  // Update data monitoring di localStorage
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
   if(data.length > 0){
-    // Update data teratas atau sesuai baris
     data[0].penyebab = penyebab;
     data[0].form5w1h = form5w1hData;
     localStorage.setItem("monitoringData", JSON.stringify(data));
@@ -954,3 +950,4 @@ window.onload = function(){
   else loadRealData();
   startMonitoring();
 };
+```
