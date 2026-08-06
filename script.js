@@ -1,6 +1,4 @@
-Berikut adalah kode JavaScript (`script.js`) utuh yang sudah direvisi sesuai permintaan Anda dan siap langsung di-copy-paste ke repository GitHub Pages Anda:
 
-```javascript
 // ================= CHART GLOBAL =================
 let chartInstance = null;
 
