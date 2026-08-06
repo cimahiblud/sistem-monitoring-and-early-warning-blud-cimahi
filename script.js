@@ -1,4 +1,3 @@
-
 // ================= CHART GLOBAL =================
 let chartInstance = null;
 
@@ -131,7 +130,7 @@ const parameterMap = {
   ]
 };
 
-// ================= URUTAN PARAMETER PER TABEL (untuk pewarnaan sel) =================
+// ================= URUTAN PARAMETER PER TABEL =================
 const colParams = {
   pra:       ["Turbidity", "EC",   "Temp", "TDS"],
   reservoir: ["Turbidity", "pH",   "Temp"],
@@ -141,7 +140,7 @@ const colParams = {
   filter:    ["WaterLevel","Temp"]
 };
 
-// ================= THRESHOLD PARAMETER (mengacu Tabel 4.1) =================
+// ================= THRESHOLD PARAMETER =================
 const paramThresholds = {
   pra: {
     Turbidity: {waspada: 31,   kritis: 40},
@@ -178,7 +177,6 @@ const paramThresholds = {
   }
 };
 
-// Kembalikan class CSS untuk sel nilai parameter berdasarkan unit + nama parameter + nilai
 function paramClass(unit, paramName, value){
   if(value === null || value === undefined || value === "-" ) return "";
   const v = parseFloat(value);
@@ -190,7 +188,6 @@ function paramClass(unit, paramName, value){
   return "normal";
 }
 
-// ================= LIMIT ROWS =================
 function limitRows(id){
   let tb = document.getElementById(id+"-body");
   if(!tb) return;
@@ -199,10 +196,8 @@ function limitRows(id){
   }
 }
 
-// ================= MODE =================
 let dummyMode = false;
 
-// ================= TABLE TEMPLATES =================
 function tableTemplate(id, headers){
   return `
   <div id="${id}" class="tab-content ${id==='pra'?'active':''}">
@@ -213,13 +208,13 @@ function tableTemplate(id, headers){
   </div>`;
 }
 
-// Kolom tabel diperbarui: "Tindakan" diubah menjadi "Penyebab Kejadian" dan "Catatan 5W1H"
+// Kolom tabel dengan header asli Anda, disesuaikan dengan Penyebab Kejadian & Catatan 5W1H
 document.getElementById("tables").innerHTML =
-  tableTemplate("pra",      ["Waktu","Turbidity","EC","Temp","TDS","Status","Penyebab Kejadian","Catatan 5W1H"]) +
-  tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Penyebab Kejadian","Catatan 5W1H"]) +
-  tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Penyebab Kejadian","Catatan 5W1H"]) +
-  tableTemplate("sed1",     ["Waktu","Turbidity","Temp","EC","pH","Status","Penyebab Kejadian","Catatan 5W1H"]) +
-  tableTemplate("sed2",     ["Waktu","Turbidity","Temp","EC","pH","Status","Penyebab Kejadian","Catatan 5W1H"]) +
+  tableTemplate("pra",      ["Waktu","Turbidity","EC","Temp","TDS","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
+  tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
+  tableTemplate("clearwell",["Waktu","TDS","Turbidity","EC","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
+  tableTemplate("sed1",     ["Waktu","Turbidity","Temp","EC","pH","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
+  tableTemplate("sed2",     ["Waktu","Turbidity","Temp","EC","pH","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
   `<div id="filter" class="tab-content">
     <div class="filter-wrapper">
       ${[1,2,3,4,5].map(n=>`
@@ -233,7 +228,6 @@ document.getElementById("tables").innerHTML =
     </div>
   </div>`;
 
-// ================= TAB =================
 function openTab(evt, tabName){
   document.querySelectorAll(".tab-content").forEach(function(tab){
     tab.style.display = "none";
@@ -246,20 +240,20 @@ function openTab(evt, tabName){
   evt.currentTarget.classList.add("active");
 }
 
-// ================= CLOCK =================
 function updateClock(){
   let now = new Date();
-  document.getElementById("clock").innerText =
-    now.toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
-    +" - "+now.toLocaleTimeString('id-ID');
+  let clockEl = document.getElementById("clock");
+  if(clockEl){
+    clockEl.innerText =
+      now.toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+      +" - "+now.toLocaleTimeString('id-ID');
+  }
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-// ================= STATUS CLASS =================
 function statusClass(s){ return s==="Normal"?"normal":s==="Waspada"?"warning":"critical"; }
 
-// ================= AUDIO ALARM =================
 let audioContext = null;
 function initAudio(){
   if(!audioContext){
@@ -288,7 +282,6 @@ function triggerAlarm(status){
   }
 }
 
-// ================= ADD ROW =================
 function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
   let tb = document.getElementById(id+"-body");
   if(!tb) return;
@@ -303,9 +296,9 @@ function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
   let actionButton = "-";
   if(status === "Waspada" || status === "Kritis"){
     if(form5w1h){
-      actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
+      actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
     } else {
-      actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#f59e0b;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Isi Catatan 5W1H</button>`;
+      actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#ffc107;color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">Isi Catatan</button>`;
     }
   }
 
@@ -332,8 +325,8 @@ function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
   else if(id==="sed2")      sumId="sum-sed2";
 
   if(sumId){
-    let labelMap = {pra:"PRA-SED",reservoir:"RESERVOIR",clearwell:"CLEARWELL",sed1:"SED-1",sed2:"SED-2"};
-    let label = labelMap[id] || id.toUpperCase();
+    let labelMap = {pra:"Pra",reservoir:"Reservoir",clearwell:"Clearwell",sed1:"Sed1",sed2:"Sed2"};
+    let label = labelMap[id] || id;
     let sumEl = document.getElementById(sumId);
     if(sumEl){
       sumEl.className = "summary-box "+statusClass(status);
@@ -343,7 +336,6 @@ function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
   }
 }
 
-// ================= ADD FILTER ROW =================
 function addFilterRow(id, values, status){
   let tb = document.getElementById(id+"-body");
   if(!tb) return;
@@ -372,10 +364,8 @@ function addFilterRow(id, values, status){
   }
 }
 
-// ================= GOOGLE SHEET =================
 const sheetURL = "https://opensheet.elk.sh/14i8S-08Yg3Vn_WFA6Ny_4uJ2stTzL9rvrTP0Qt0bCmQ/Sheet1";
 
-// ================= STATUS LOGIC =================
 function getStatusPra(turb, tds, ph, temp){
   if(turb >= 40 || tds >= 600 || ph >= 9 || temp >= 30) return "Kritis";
   if(turb >= 31 || tds >= 501 || ph >= 8.5 || temp >= 28.5) return "Waspada";
@@ -402,7 +392,6 @@ function getStatusFilter(temp){
   return "Normal";
 }
 
-// ================= LOAD REAL DATA =================
 let lastFetchedWaktu = null;
 async function loadRealData(){
   if(dummyMode) return;
@@ -462,7 +451,6 @@ async function loadRealData(){
   }
 }
 
-// ================= STORAGE =================
 function loadSavedMonitoring(){
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
   data.forEach(d=>{
@@ -477,7 +465,6 @@ function saveMonitoringData(unit, values, status, penyebab="-", form5w1h=null){
   localStorage.setItem("monitoringData", JSON.stringify(data));
 }
 
-// ================= HISTORY =================
 function saveToHistory(unit, status, penyebab, form5w1h){
   let h = JSON.parse(localStorage.getItem("historyLog")) || [];
   h.unshift({waktu:new Date().toLocaleString("id-ID"), unit, status, penyebab, form5w1h});
@@ -510,7 +497,6 @@ function clearHistory(){
   openHistory();
 }
 
-// ================= CHART =================
 function openChartPopup(){
   let popup = document.getElementById("chartPopup");
   if(popup) popup.style.display = "block";
@@ -627,87 +613,19 @@ function downloadData(){
   XLSX.writeFile(wb, "Monitoring_Data_5W1H.xlsx");
 }
 
-// ================= 5W1H ACTION FORM MODAL =================
+// ================= FORM 5W1H (MENGGANTIKAN actionForm) =================
 let selectedRow    = null;
 let selectedUnit   = null;
 let selectedStatus = null;
 
-// Pastikan elemen modal HTML 5W1H diinjeksikan secara otomatis jika belum ada di DOM
-function ensureFormModalHTML(){
-  if(document.getElementById("custom5W1HModal")) return;
-  let modalDiv = document.createElement("div");
-  modalDiv.id = "custom5W1HModal";
-  modalDiv.style.cssText = "display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); overflow:auto; font-family:sans-serif;";
-  modalDiv.innerHTML = `
-    <div style="background:#1e293b; color:#f8fafc; margin:5% auto; padding:24px; width:90%; max-width:650px; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
-      <h3 style="margin-top:0; color:#38bdf8; font-size:18px; border-bottom:1px solid #334155; padding-bottom:10px;">Form Catatan Operator & Analisis Penyebab (5W1H)</h3>
-      <p id="modalUnitStatus" style="font-size:13px; color:#94a3b8; margin-bottom:15px;"></p>
-      
-      <div style="margin-bottom:14px;">
-        <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:#cbd5e1;">Pilih Penyebab Kejadian (Over Limit / Anomali) *</label>
-        <select id="selectPenyebab" style="width:100%; padding:8px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:13px;"></select>
-      </div>
-
-      <div style="border-top:1px solid #334155; padding-top:12px; margin-top:12px;">
-        <h4 style="font-size:13px; color:#38bdf8; margin-bottom:10px; text-transform:uppercase;">Struktur Pertanyaan 5W1H</h4>
-        
-        <div style="margin-bottom:10px;">
-          <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">1. Parameter apa yang diperbaiki?</label>
-          <input type="text" id="f_q1" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px;">
-        </div>
-
-        <div style="margin-bottom:10px;">
-          <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">2. Bagaimana melakukan tindakan tersebut? (Langkah Penanganan)</label>
-          <textarea id="f_q2" rows="3" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px; resize:none;" placeholder="Tulis langkah perbaikan..."></textarea>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <div style="flex:1;">
-            <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">3. Di mana lokasi tindakan perbaikan?</label>
-            <input type="text" id="f_q3" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px;">
-          </div>
-          <div style="flex:1;">
-            <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">4. Kapan tindakan tersebut dilakukan?</label>
-            <input type="text" id="f_q4" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px;">
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-          <div style="flex:1;">
-            <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">5. Operator / Teknisi</label>
-            <input type="text" id="f_q5" value="Ahmad Operator (Shift 1)" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px;">
-          </div>
-          <div style="flex:1;">
-            <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">6. Analis / Supervisor</label>
-            <input type="text" id="f_q6" value="Ir. Budi (Supervisor Lab)" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px;">
-          </div>
-          <div style="flex:1;">
-            <label style="display:block; font-size:11px; color:#cbd5e1; margin-bottom:3px;">7. Penanggung Jawab / Manajer</label>
-            <input type="text" id="f_q7" value="Dr. Hendra (Manajer Operasional)" style="width:100%; padding:7px; background:#0f172a; color:#fff; border:1px solid #475569; border-radius:6px; font-size:12px;">
-          </div>
-        </div>
-      </div>
-
-      <div style="text-align:right; border-top:1px solid #334155; padding-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-        <button onclick="closeFormModal()" style="padding:8px 16px; background:#475569; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Batal</button>
-        <button onclick="saveAction5W1H()" style="padding:8px 16px; background:#0284c7; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold;">Simpan & Sinkronkan</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalDiv);
-}
-
 function openForm(button, unit, status){
-  ensureFormModalHTML();
   selectedRow    = button.parentElement.parentElement;
   selectedUnit   = unit;
   selectedStatus = status;
 
-  document.getElementById("modalUnitStatus").innerText = "Unit: " + unit.toUpperCase() + " | Status: " + status;
-  
-  let selectEl = document.getElementById("selectPenyebab");
-  selectEl.innerHTML = "";
-  
+  let formEl = document.getElementById("actionForm");
+  if(!formEl) return;
+
   let paramsList = parameterMap[unit] || [];
   let affectedParam = paramsList[0]?.name || "Turbidity";
   let unitThresh = paramThresholds[unit] || {};
@@ -729,35 +647,70 @@ function openForm(button, unit, status){
     "Fluktuasi kualitas air baku mendadak"
   ];
 
-  options.forEach(opt => {
-    let optEl = document.createElement("option");
-    optEl.value = opt;
-    optEl.text = opt;
-    selectEl.appendChild(optEl);
-  });
+  let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
 
-  document.getElementById("f_q1").value = affectedParam + " pada Unit " + unit.toUpperCase() + " bernilai " + status;
-  document.getElementById("f_q2").value = "";
-  document.getElementById("f_q3").value = "Instalasi WTP Unit " + unit.toUpperCase() + " - Zona Utama";
-  document.getElementById("f_q4").value = new Date().toLocaleString("id-ID");
+  formEl.innerHTML = `
+    <h3>Form Catatan Operator & Analisis 5W1H</h3>
+    <p id="formInfo">Unit: ${unit.toUpperCase()} | Status: ${status}</p>
+    
+    <div style="margin-bottom:10px;">
+      <label style="font-weight:bold;font-size:12px;display:block;margin-bottom:3px;">Pilih Penyebab Kejadian:</label>
+      <select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>
+    </div>
 
-  document.getElementById("custom5W1HModal").style.display = "block";
+    <div style="font-size:11px; margin-bottom:6px; font-weight:bold; color:#007bff;">Struktur Pertanyaan 5W1H:</div>
+    
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">1. Parameter apa yang diperbaiki?</label>
+      <input type="text" id="f_q1" value="${affectedParam} pada Unit ${unit.toUpperCase()} bernilai ${status}" style="width:100%;padding:5px;font-size:11px;">
+    </div>
+
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">2. Bagaimana melakukan tindakan tersebut? (Langkah Penanganan)</label>
+      <textarea id="f_q2" rows="2" style="width:100%;height:50px;font-size:11px;" placeholder="Tulis langkah perbaikan..."></textarea>
+    </div>
+
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">3. Di mana lokasi tindakan perbaikan?</label>
+      <input type="text" id="f_q3" value="Instalasi WTP Unit ${unit.toUpperCase()} - Zona Utama" style="width:100%;padding:5px;font-size:11px;">
+    </div>
+
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">4. Kapan tindakan tersebut dilakukan?</label>
+      <input type="text" id="f_q4" value="${new Date().toLocaleString("id-ID")}" style="width:100%;padding:5px;font-size:11px;">
+    </div>
+
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">5. Operator: <input type="text" id="f_q5" value="Ahmad Operator" style="width:70%;padding:3px;font-size:11px;"></label>
+    </div>
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">6. Analis: <input type="text" id="f_q6" value="Ir. Budi" style="width:75%;padding:3px;font-size:11px;"></label>
+    </div>
+    <div style="margin-bottom:6px;">
+      <label style="font-size:11px;">7. Manajer: <input type="text" id="f_q7" value="Dr. Hendra" style="width:73%;padding:3px;font-size:11px;"></label>
+    </div>
+
+    <br>
+    <button onclick="saveAction()">Simpan</button>
+    <button onclick="closeForm()">Batal</button>
+  `;
+  formEl.style.display = "block";
 }
 
-function closeFormModal(){
-  let modal = document.getElementById("custom5W1HModal");
-  if(modal) modal.style.display = "none";
+function closeForm(){ 
+  let formEl = document.getElementById("actionForm");
+  if(formEl) formEl.style.display = "none"; 
 }
 
-function saveAction5W1H(){
-  let penyebab = document.getElementById("selectPenyebab").value;
-  let q1 = document.getElementById("f_q1").value;
-  let q2 = document.getElementById("f_q2").value;
-  let q3 = document.getElementById("f_q3").value;
-  let q4 = document.getElementById("f_q4").value;
-  let q5 = document.getElementById("f_q5").value;
-  let q6 = document.getElementById("f_q6").value;
-  let q7 = document.getElementById("f_q7").value;
+function saveAction(){
+  let penyebab = document.getElementById("selectPenyebab")?.value || "-";
+  let q1 = document.getElementById("f_q1")?.value || "";
+  let q2 = document.getElementById("f_q2")?.value || "";
+  let q3 = document.getElementById("f_q3")?.value || "";
+  let q4 = document.getElementById("f_q4")?.value || "";
+  let q5 = document.getElementById("f_q5")?.value || "";
+  let q6 = document.getElementById("f_q6")?.value || "";
+  let q7 = document.getElementById("f_q7")?.value || "";
 
   if(!q2){
     alert("Langkah penanganan (Q2) wajib diisi!");
@@ -767,7 +720,7 @@ function saveAction5W1H(){
   let form5w1hData = { q1_parameter: q1, q2_langkah: q2, q3_lokasi: q3, q4_waktu: q4, q5_operator: q5, q6_analis: q6, q7_manajer: q7 };
 
   selectedRow.cells[selectedRow.cells.length-2].innerText = penyebab;
-  selectedRow.cells[selectedRow.cells.length-1].innerHTML = `<button onclick="openForm(this,'${selectedUnit}','${selectedStatus}')" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
+  selectedRow.cells[selectedRow.cells.length-1].innerHTML = `<button onclick="openForm(this,'${selectedUnit}','${selectedStatus}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
 
   saveToHistory(selectedUnit, selectedStatus, penyebab, form5w1hData);
   
@@ -778,11 +731,10 @@ function saveAction5W1H(){
     localStorage.setItem("monitoringData", JSON.stringify(data));
   }
 
-  closeFormModal();
+  closeForm();
   alert("Catatan 5W1H & Penyebab Kejadian berhasil disimpan!");
 }
 
-// ================= STANDAR =================
 function openStandar(){ 
   let popup = document.getElementById("standarPopup");
   if(popup) popup.style.display = "block"; 
@@ -792,7 +744,6 @@ function closeStandar(){
   if(popup) popup.style.display = "none"; 
 }
 
-// ================= CLEAR TABLES =================
 function clearAllTables(){
   ["pra","reservoir","clearwell","sed1","sed2","filter1","filter2","filter3","filter4","filter5"].forEach(id=>{
     let body = document.getElementById(id+"-body");
@@ -800,7 +751,6 @@ function clearAllTables(){
   });
 }
 
-// ================= DUMMY DATA GENERATOR =================
 function rand(min, max, dec=2){
   return parseFloat((Math.random()*(max-min)+min).toFixed(dec));
 }
@@ -920,7 +870,6 @@ function loadDummyData(){
   [1,2,3,4,5].forEach(n => dummyFilter(n));
 }
 
-// ================= MONITORING INTERVAL =================
 let monitoringInterval = null;
 
 function startMonitoring(){
