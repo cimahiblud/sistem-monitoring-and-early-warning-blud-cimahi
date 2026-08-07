@@ -1,3 +1,4 @@
+
 // ================= CHART GLOBAL =================
 let chartInstance = null;
 
@@ -196,8 +197,6 @@ function limitRows(id){
   }
 }
 
-let dummyMode = false;
-
 function tableTemplate(id, headers){
   return `
   <div id="${id}" class="tab-content ${id==='pra'?'active':''}">
@@ -208,7 +207,7 @@ function tableTemplate(id, headers){
   </div>`;
 }
 
-// Kolom tabel dengan header asli Anda, disesuaikan dengan Penyebab Kejadian & Catatan 5W1H
+// Kolom tabel dengan header asli, disesuaikan dengan Penyebab Kejadian & Catatan 5W1H
 document.getElementById("tables").innerHTML =
   tableTemplate("pra",      ["Waktu","Turbidity","EC","Temp","TDS","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
   tableTemplate("reservoir",["Waktu","Turbidity","pH","Temp","Status","Penyebab Kejadian","Catatan Tindakan Operator"]) +
@@ -282,6 +281,47 @@ function triggerAlarm(status){
   }
 }
 
+function getPenyebabOptions(unit, params, values, status){
+  if(status === "Normal") return "-";
+  
+  let unitMap = penyebabKejadianMap[unit];
+  if(!unitMap) return "-";
+  
+  let allOptions = new Set();
+  Object.values(unitMap).forEach(arr => {
+    if(Array.isArray(arr)){
+      arr.forEach(o => {
+        if(o !== "-- Pilih Penyebab --") allOptions.add(o);
+      });
+    }
+  });
+  
+  if(allOptions.size === 0) return "-";
+  
+  let opts = `<option>-- Pilih Penyebab --</option>`;
+  allOptions.forEach(o => { opts += `<option>${o}</option>`; });
+  
+  return `<select onchange="savePenyebab(this,'${unit}','${status}')">${opts}</select>`;
+}
+
+function savePenyebab(selectEl, unit, status){
+  let penyebab = selectEl.value;
+  let row = selectEl.closest("tr");
+  if(!row) return;
+  
+  let penyebabCell = row.cells[row.cells.length - 2];
+  if(penyebabCell){
+    penyebabCell.innerText = penyebab;
+  }
+  
+  let values = [];
+  for(let i = 1; i <= row.cells.length - 4; i++){
+    values.push(row.cells[i].innerText);
+  }
+  
+  saveMonitoringData(unit, values, status, penyebab, null);
+}
+
 function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
   let tb = document.getElementById(id+"-body");
   if(!tb) return;
@@ -309,10 +349,12 @@ function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
     return "<td class='"+cls+"'>"+(v ?? "-")+"</td>";
   }).join("");
 
+  let penyebabCellContent = (penyebab && penyebab !== "-") ? penyebab : getPenyebabOptions(id, params, values, status);
+
   tr.innerHTML = "<td>"+waktu+"</td>" +
     valuesHtml +
     "<td class='"+statusClass(status)+"'>"+status+"</td>" +
-    "<td>"+(penyebab || "-")+"</td>" +
+    "<td>"+penyebabCellContent+"</td>" +
     "<td>"+actionButton+"</td>";
 
   limitRows(id);
@@ -394,7 +436,6 @@ function getStatusFilter(temp){
 
 let lastFetchedWaktu = null;
 async function loadRealData(){
-  if(dummyMode) return;
   try{
     const res = await fetch(sheetURL);
     const data = await res.json();
@@ -613,7 +654,7 @@ function downloadData(){
   XLSX.writeFile(wb, "Monitoring_Data_5W1H.xlsx");
 }
 
-// ================= PERBAIKAN 1 & 2 IMPLEMENTATION =================
+// ================= FORM 5W1H =================
 let selectedRow    = null;
 let selectedUnit   = null;
 let selectedStatus = null;
@@ -626,16 +667,23 @@ function openForm(button, unit, status){
   let formEl = document.getElementById("actionForm");
   if(!formEl) return;
 
-  // PERBAIKAN 1: Jika status "Normal", kembalikan "-"
-  if(status === "Normal"){
-    formEl.style.display = "none";
-    return;
+  let paramsList = parameterMap[unit] || [];
+  let affectedParam = paramsList[0]?.name || "Turbidity";
+  let unitThresh = paramThresholds[unit] || {};
+  
+  for(let i=0; i<selectedRow.cells.length-3; i++){
+    let cellVal = selectedRow.cells[i+1]?.innerText;
+    let pName = paramsList[i]?.name;
+    if(pName && unitThresh[pName]){
+      let vNum = parseFloat(cellVal);
+      if(vNum >= unitThresh[pName].waspada){
+        affectedParam = pName;
+      }
+    }
   }
 
-  // Jika status "Waspada" atau "Kritis", ambil semua pilihan dari objek penyebabKejadianMap[unit]
   let mapData = penyebabKejadianMap[unit];
   let options = [];
-
   if(mapData && typeof mapData === "object" && Object.keys(mapData).length > 0){
     let uniqueSet = new Set();
     Object.values(mapData).forEach(arr => {
@@ -646,24 +694,15 @@ function openForm(button, unit, status){
     options = Array.from(uniqueSet);
   }
 
-  // Jika penyebabMap[unit] tidak ada atau kosong, kembalikan "-"
-  let dropdownHtml = "-";
-  if(options.length > 0){
-    let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
-    dropdownHtml = `<select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>`;
-  }
+  let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
 
-  let paramsList = parameterMap[unit] || [];
-  let affectedParam = paramsList[0]?.name || "Turbidity";
-
-  // PERBAIKAN 2: Hapus nilai default pada f_lokasi, f_analis, dan f_pj. Hanya f_waktu yang terisi waktu saat ini.
   formEl.innerHTML = `
     <h3>Form Catatan Operator & Analisis 5W1H</h3>
     <p id="formInfo">Unit: ${unit.toUpperCase()} | Status: ${status}</p>
     
     <div style="margin-bottom:10px;">
       <label style="font-weight:bold;font-size:12px;display:block;margin-bottom:3px;">Pilih Penyebab Kejadian:</label>
-      ${dropdownHtml}
+      <select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>
     </div>
 
     <div style="font-size:11px; margin-bottom:6px; font-weight:bold; color:#007bff;">Struktur Pertanyaan 5W1H:</div>
@@ -714,8 +753,7 @@ function closeForm(){
 }
 
 function saveAction(){
-  let selectEl = document.getElementById("selectPenyebab");
-  let penyebab = selectEl ? selectEl.value : "-";
+  let penyebab = document.getElementById("selectPenyebab")?.value || "-";
   let q1 = document.getElementById("f_q1")?.value || "";
   let q2 = document.getElementById("f_q2")?.value || "";
   let lokasi = document.getElementById("f_lokasi")?.value || "";
@@ -771,132 +809,12 @@ function clearAllTables(){
   });
 }
 
-function rand(min, max, dec=2){
-  return parseFloat((Math.random()*(max-min)+min).toFixed(dec));
-}
-
-function pickZone(){
-  let r = Math.random();
-  if(r < 0.70) return "normal";
-  if(r < 0.90) return "waspada";
-  return "kritis";
-}
-
-function dummyPra(){
-  let zone = pickZone();
-  let turb, tds, ph, temp, ec;
-  if(zone === "normal"){
-    turb = rand(4, 30);
-    tds  = rand(100, 500);
-    ph   = rand(6.5, 8.4, 1);
-    temp = rand(27,  28.4, 1);
-  } else if(zone === "waspada"){
-    turb = rand(31, 39);
-    tds  = rand(501, 599);
-    ph   = rand(8.5, 8.9, 1);
-    temp = rand(28.5,29.9, 1);
-  } else {
-    turb = rand(40, 60);
-    tds  = rand(600, 700);
-    ph   = rand(9.0, 10.0, 1);
-    temp = rand(30,  32,  1);
-  }
-  ec = rand(200, 800);
-  let status = getStatusPra(turb, tds, ph, temp);
-  addRow("pra", [turb, ec, temp, tds], status);
-}
-
-function dummySedimentasi(unit){
-  let zone = pickZone();
-  let turb, tds, ph, temp, ec;
-  if(zone === "normal"){
-    turb = rand(0.5, 2.4);
-    tds  = rand(120, 250);
-    ph   = rand(6.5, 8.4, 1);
-    temp = rand(27,  28.4, 1);
-  } else if(zone === "waspada"){
-    turb = rand(2.6, 2.9);
-    tds  = rand(251, 269);
-    ph   = rand(8.5, 8.9, 1);
-    temp = rand(28.5,29.9, 1);
-  } else {
-    turb = rand(3.0, 5.0);
-    tds  = rand(270, 350);
-    ph   = rand(9.0, 10.0, 1);
-    temp = rand(30,  32,  1);
-  }
-  ec = rand(150, 500);
-  let status = getStatusSedimentasi(turb, tds, ph, temp);
-  addRow(unit, [turb, temp, ec, ph], status);
-}
-
-function dummyReservoir(){
-  let zone = pickZone();
-  let turb, tds, ph, temp;
-  if(zone === "normal"){
-    turb = rand(0.5, 2.4);
-    tds  = rand(120, 250);
-    ph   = rand(6.5, 8.4, 1);
-    temp = rand(27,  28.4, 1);
-  } else if(zone === "waspada"){
-    turb = rand(2.6, 2.9);
-    tds  = rand(251, 269);
-    ph   = rand(8.5, 8.9, 1);
-    temp = rand(28.5,29.9, 1);
-  } else {
-    turb = rand(3.0, 5.0);
-    tds  = rand(270, 350);
-    ph   = rand(9.0, 10.0, 1);
-    temp = rand(30,  32,  1);
-  }
-  let status = getStatusReservoir(turb, tds, ph, temp);
-  addRow("reservoir", [turb, ph, temp], status);
-}
-
-function dummyClearwell(){
-  let zone = pickZone();
-  let tds, turb, ec;
-  if(zone === "normal"){
-    tds  = rand(120, 250);
-    turb = rand(0.5, 2.4);
-    ec   = rand(150, 400);
-  } else if(zone === "waspada"){
-    tds  = rand(251, 269);
-    turb = rand(2.6, 2.9);
-    ec   = rand(401, 499);
-  } else {
-    tds  = rand(270, 350);
-    turb = rand(3.0, 5.0);
-    ec   = rand(500, 600);
-  }
-  let status = getStatusClearwell(turb, tds, 7, 28);
-  addRow("clearwell", [tds, turb, ec], status);
-}
-
-function dummyFilter(n){
-  let level = rand(20, 100, 1);
-  let temp  = rand(27, 31, 1);
-  let status = getStatusFilter(temp);
-  addFilterRow("filter"+n, [level, temp], status);
-}
-
-function loadDummyData(){
-  if(!dummyMode) return;
-  dummyPra();
-  dummyReservoir();
-  dummySedimentasi("sed1");
-  dummySedimentasi("sed2");
-  dummyClearwell();
-  [1,2,3,4,5].forEach(n => dummyFilter(n));
-}
-
 let monitoringInterval = null;
 
 function startMonitoring(){
   if(monitoringInterval) return;
   monitoringInterval = setInterval(()=>{
-    if(dummyMode) loadDummyData();
-    else loadRealData();
+    loadRealData();
   }, 10000);
 }
 
@@ -913,7 +831,6 @@ document.addEventListener("visibilitychange", function(){
 window.onload = function(){
   clearAllTables();
   loadSavedMonitoring();
-  if(dummyMode) loadDummyData();
-  else loadRealData();
+  loadRealData();
   startMonitoring();
 };
