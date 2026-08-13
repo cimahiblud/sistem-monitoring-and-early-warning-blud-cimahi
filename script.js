@@ -704,8 +704,6 @@ function openForm(button, unit, status){
       <label style="font-weight:bold;font-size:12px;display:block;margin-bottom:3px;">Pilih Penyebab Kejadian:</label>
       <select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>
     </div>
-
-    <div style="font-size:11px; margin-bottom:6px; font-weight:bold; color:#007bff;">Struktur Pertanyaan 5W1H:</div>
     
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">1. Parameter apa yang diperbaiki?</label>
