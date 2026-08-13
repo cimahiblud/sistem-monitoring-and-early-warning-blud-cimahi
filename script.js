@@ -697,7 +697,7 @@ function openForm(button, unit, status){
   let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
 
   formEl.innerHTML = `
-    <h3>Form Catatan Operator & Analisis 5W1H</h3>
+    <h3>Form Catatan Operator & Analisis </h3>
     <p id="formInfo">Unit: ${unit.toUpperCase()} | Status: ${status}</p>
     
     <div style="margin-bottom:10px;">
@@ -730,11 +730,11 @@ function openForm(button, unit, status){
       <input type="text" id="f_q5" placeholder="Nama operator..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">6. Analis / Supervisor:</label>
+      <label style="font-size:11px;">6. Analis :</label>
       <input type="text" id="f_analis" placeholder="Nama analis..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">7. Penanggung Jawab / Manajer:</label>
+      <label style="font-size:11px;">7. Penanggung Jawab :</label>
       <input type="text" id="f_pj" placeholder="Nama penanggung jawab..." style="width:100%;padding:3px;font-size:11px;">
     </div>
 
