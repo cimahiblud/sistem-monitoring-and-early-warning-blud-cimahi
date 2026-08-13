@@ -1,4 +1,3 @@
-
 // ================= CHART GLOBAL =================
 let chartInstance = null;
 
@@ -325,47 +324,42 @@ function savePenyebab(selectEl, unit, status){
 function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
   let tb = document.getElementById(id+"-body");
   if(!tb) return;
-
   let tr = tb.insertRow(0);
-
   if(!waktu){
     waktu = new Date().toLocaleTimeString('id-ID');
     saveMonitoringData(id, values, status, penyebab, form5w1h);
   }
-
   let actionButton = "-";
   if(status === "Waspada" || status === "Kritis"){
-    if(form5w1h){
+    let waktuBaru = tr.cells[0]?.innerText || waktu;
+    let storageKey = `catatan_${id}_${waktuBaru}`;
+    let hasSavedCatatan = localStorage.getItem(storageKey) !== null || form5w1h;
+
+    if(hasSavedCatatan){
       actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
     } else {
       actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#ffc107;color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">Isi Catatan</button>`;
     }
   }
-
   let params = colParams[id] || [];
   let valuesHtml = values.map((v, i) => {
     let pname = params[i];
     let cls   = paramClass(id, pname, v);
     return "<td class='"+cls+"'>"+(v ?? "-")+"</td>";
   }).join("");
-
   let penyebabCellContent = (penyebab && penyebab !== "-") ? penyebab : getPenyebabOptions(id, params, values, status);
-
   tr.innerHTML = "<td>"+waktu+"</td>" +
     valuesHtml +
     "<td class='"+statusClass(status)+"'>"+status+"</td>" +
     "<td>"+penyebabCellContent+"</td>" +
     "<td>"+actionButton+"</td>";
-
   limitRows(id);
-
   let sumId = null;
   if(id==="pra")            sumId="sum-pra";
   else if(id==="reservoir") sumId="sum-res";
   else if(id==="clearwell") sumId="sum-clear";
   else if(id==="sed1")      sumId="sum-sed1";
   else if(id==="sed2")      sumId="sum-sed2";
-
   if(sumId){
     let labelMap = {pra:"Pra",reservoir:"Reservoir",clearwell:"Clearwell",sed1:"Sed1",sed2:"Sed2"};
     let label = labelMap[id] || id;
@@ -383,20 +377,17 @@ function addFilterRow(id, values, status){
   if(!tb) return;
   let tr = tb.insertRow(0);
   let waktu = new Date().toLocaleTimeString('id-ID');
-
   let params = colParams.filter;
   let valuesHtml = values.map((v, i) => {
     let pname = params[i];
     let cls   = paramClass("filter", pname, v);
     return "<td class='"+cls+"'>"+(v ?? "-")+"</td>";
   }).join("");
-
   tr.innerHTML = "<td>"+waktu+"</td>" +
     valuesHtml +
     "<td class='"+statusClass(status)+"'>"+status+"</td>" +
     "<td>-</td>";
   if(tb.rows.length > 20) tb.deleteRow(20);
-
   let n = id.replace("filter","");
   let sumEl = document.getElementById("sum-filter"+n);
   if(sumEl){
@@ -444,27 +435,23 @@ async function loadRealData(){
     let waktuBaru = (last["Waktu"] || last["waktu"] || "").toString().trim();
     if(waktuBaru && waktuBaru === lastFetchedWaktu) return;
     lastFetchedWaktu = waktuBaru;
-
     function val(...keys){
       for(let k of keys){
         if(last[k] !== undefined && last[k] !== "") return parseFloat(last[k]) || 0;
       }
       return 0;
     }
-
     let turbPra = val("Pra-Sed_Turbid");
     let ecPra   = val("Pra-Sed_EC");
     let tempPra = val("Pra-Sed_Temp");
     let tdsPra  = val("Pra-Sed_TDS");
     let statusPra = getStatusPra(turbPra, tdsPra, 7, tempPra);
     addRow("pra", [turbPra, ecPra, tempPra, tdsPra], statusPra);
-
     let turbRes = val("Reservoir_Turbid");
     let tempRes = val("Reservoir_Temp");
     let phRes   = val("Reservoir_Ph");
     let statusRes = getStatusReservoir(turbRes, 0, phRes, tempRes);
     addRow("reservoir", [turbRes, phRes, tempRes], statusRes);
-
     let turbSed = val("Sedimen_Turbid", "Sedimen _Turbid");
     let ecSed   = val("Sedimen_EC",     "Sedimen _EC");
     let tempSed = val("Sedimen_Temp",   "Sedimen _Temp");
@@ -472,13 +459,11 @@ async function loadRealData(){
     let statusSed = getStatusSedimentasi(turbSed, 0, phSed, tempSed);
     addRow("sed1", [turbSed, tempSed, ecSed, phSed], statusSed);
     addRow("sed2", [turbSed, tempSed, ecSed, phSed], statusSed);
-
     let turbClear = val("Clearwell_Turbid", "Clearwell _Turbid");
     let ecClear   = val("Clearwell_EC",     "Clearwell _EC");
     let tdsClear  = val("Clearwell_TDS", "Clearwell _TDS");
     let statusClear = getStatusClearwell(turbClear, tdsClear, 7, 28);
     addRow("clearwell", [tdsClear, turbClear, ecClear], statusClear);
-
     for(let n = 1; n <= 5; n++){
       let levelKey = n === 4 ? "Filter4_Wat-Level" : `Filter${n}_Wat-level`;
       let tempKey  = `Filter${n}_Temp`;
@@ -593,11 +578,12 @@ function generateChart(){
   });
 }
 
-// ================= DOWNLOAD EXCEL (XLSX) =================
+// ================= DOWNLOAD EXCEL (XLSX) - DENGAN MASALAH 3 DIPERBAIKI =================
 function downloadData(){
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
   if(data.length === 0){ alert("Tidak ada data"); return; }
 
+  let history = JSON.parse(localStorage.getItem("historyLog")) || [];
   const units = ["pra","reservoir","clearwell","sed1","sed2"];
   let wb = XLSX.utils.book_new();
 
@@ -620,13 +606,20 @@ function downloadData(){
     let rows = [headers];
 
     unitData.forEach(d => {
-      let f = d.form5w1h || {};
+      let waktuData = new Date(d.waktu).getTime();
+      let hist = history.find(h => {
+        if(h.unit !== unit) return false;
+        let waktuHist = new Date(h.waktu).getTime();
+        return Math.abs(waktuData - waktuHist) < 120000; // toleransi 2 menit
+      }) || {};
+
+      let f = hist.form5w1h || d.form5w1h || {};
       let row = [
         new Date(d.waktu).toLocaleString("id-ID"),
         d.unit.toUpperCase(),
         ...(d.values || []),
         d.status,
-        d.penyebab || "-",
+        hist.penyebab || d.penyebab || "-",
         f.q1_parameter || "-",
         f.q2_langkah || "-",
         f.q3_lokasi || "-",
@@ -654,25 +647,36 @@ function downloadData(){
   XLSX.writeFile(wb, "Monitoring_Data_5W1H.xlsx");
 }
 
-// ================= FORM 5W1H =================
-let selectedRow    = null;
-let selectedUnit   = null;
-let selectedStatus = null;
+// ================= FORM 5W1H (DENGAN MASALAH 1 & 2 DIPERBAIKI) =================
+let currentActiveRow = null;
 
 function openForm(button, unit, status){
-  selectedRow    = button.parentElement.parentElement;
-  selectedUnit   = unit;
-  selectedStatus = status;
-
+  currentActiveRow = button.closest("tr");
   let formEl = document.getElementById("actionForm");
   if(!formEl) return;
+
+  // Isolasi state menggunakan atribut pada form
+  formEl.setAttribute('data-unit', unit);
+  formEl.setAttribute('data-status', status);
+  let waktuBaru = currentActiveRow.cells[0]?.innerText || new Date().toISOString();
+  formEl.setAttribute('data-waktu', waktuBaru);
+
+  // Cek apakah sudah ada catatan tersimpan di localStorage berdasarkan unit & waktu baris
+  let storageKey = `catatan_${unit}_${waktuBaru}`;
+  let existingData = JSON.parse(localStorage.getItem(storageKey));
+
+  // Jika tombol diklik saat status "Lihat 5W1H" (sudah tersimpan), tampilkan popup view
+  if(button.innerText.includes("Lihat 5W1H") || existingData){
+    openViewForm(unit, waktuBaru);
+    return;
+  }
 
   let paramsList = parameterMap[unit] || [];
   let affectedParam = paramsList[0]?.name || "Turbidity";
   let unitThresh = paramThresholds[unit] || {};
   
-  for(let i=0; i<selectedRow.cells.length-3; i++){
-    let cellVal = selectedRow.cells[i+1]?.innerText;
+  for(let i=0; i<currentActiveRow.cells.length-3; i++){
+    let cellVal = currentActiveRow.cells[i+1]?.innerText;
     let pName = paramsList[i]?.name;
     if(pName && unitThresh[pName]){
       let vNum = parseFloat(cellVal);
@@ -697,7 +701,7 @@ function openForm(button, unit, status){
   let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
 
   formEl.innerHTML = `
-    <h3>Form Catatan Operator & Analisis </h3>
+    <h3>Form Catatan Operator & Analisis</h3>
     <p id="formInfo">Unit: ${unit.toUpperCase()} | Status: ${status}</p>
     
     <div style="margin-bottom:10px;">
@@ -709,22 +713,18 @@ function openForm(button, unit, status){
       <label style="font-size:11px;">1. Parameter apa yang diperbaiki?</label>
       <input type="text" id="f_q1" value="${affectedParam} pada Unit ${unit.toUpperCase()} bernilai ${status}" style="width:100%;padding:5px;font-size:11px;">
     </div>
-
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">2. Bagaimana melakukan tindakan tersebut? (Langkah Penanganan)</label>
       <textarea id="f_q2" rows="2" style="width:100%;height:50px;font-size:11px;" placeholder="Tulis langkah perbaikan..."></textarea>
     </div>
-
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">3. Di mana lokasi tindakan perbaikan?</label>
       <input type="text" id="f_lokasi" placeholder="Masukkan lokasi perbaikan..." style="width:100%;padding:5px;font-size:11px;">
     </div>
-
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">4. Kapan tindakan tersebut dilakukan?</label>
       <input type="text" id="f_waktu" value="${new Date().toISOString().slice(0,16)}" style="width:100%;padding:5px;font-size:11px;">
     </div>
-
     <div style="margin-bottom:6px;">
       <label style="font-size:11px;">5. Operator:</label>
       <input type="text" id="f_q5" placeholder="Nama operator..." style="width:100%;padding:3px;font-size:11px;">
@@ -737,7 +737,6 @@ function openForm(button, unit, status){
       <label style="font-size:11px;">7. Penanggung Jawab :</label>
       <input type="text" id="f_pj" placeholder="Nama penanggung jawab..." style="width:100%;padding:3px;font-size:11px;">
     </div>
-
     <br>
     <button onclick="saveAction()" style="background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">Simpan</button>
     <button onclick="closeForm()" style="background:#6c757d;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;margin-left:5px;">Batal</button>
@@ -751,6 +750,14 @@ function closeForm(){
 }
 
 function saveAction(){
+  let formEl = document.getElementById("actionForm");
+  if(!formEl || !currentActiveRow) return;
+
+  // Baca unit dan waktu langsung dari atribut form yang terisolasi
+  let unit = formEl.getAttribute('data-unit');
+  let status = formEl.getAttribute('data-status');
+  let waktuBaru = formEl.getAttribute('data-waktu');
+
   let penyebab = document.getElementById("selectPenyebab")?.value || "-";
   let q1 = document.getElementById("f_q1")?.value || "";
   let q2 = document.getElementById("f_q2")?.value || "";
@@ -766,6 +773,7 @@ function saveAction(){
   }
 
   let form5w1hData = { 
+    penyebab: penyebab,
     q1_parameter: q1, 
     q2_langkah: q2, 
     q3_lokasi: lokasi, 
@@ -775,20 +783,58 @@ function saveAction(){
     q7_manajer: pj 
   };
 
-  selectedRow.cells[selectedRow.cells.length-2].innerText = penyebab;
-  selectedRow.cells[selectedRow.cells.length-1].innerHTML = `<button onclick="openForm(this,'${selectedUnit}','${selectedStatus}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
+  // Simpan ke localStorage dengan key unik berdasarkan unit + waktu baris
+  let storageKey = `catatan_${unit}_${waktuBaru}`;
+  localStorage.setItem(storageKey, JSON.stringify(form5w1hData));
 
-  saveToHistory(selectedUnit, selectedStatus, penyebab, form5w1hData);
+  // Update tampilan sel pada baris tabel yang bersangkutan
+  currentActiveRow.cells[currentActiveRow.cells.length-2].innerText = penyebab;
+  currentActiveRow.cells[currentActiveRow.cells.length-1].innerHTML = `<button onclick="openViewForm('${unit}','${waktuBaru}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
+
+  saveToHistory(unit, status, penyebab, form5w1hData);
   
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
-  if(data.length > 0){
-    data[0].penyebab = penyebab;
-    data[0].form5w1h = form5w1hData;
+  let targetData = data.find(d => d.unit === unit);
+  if(targetData){
+    targetData.penyebab = penyebab;
+    targetData.form5w1h = form5w1hData;
     localStorage.setItem("monitoringData", JSON.stringify(data));
   }
 
   closeForm();
   alert("Catatan 5W1H & Penyebab Kejadian berhasil disimpan!");
+}
+
+// Fungsi popup untuk melihat detail isian 5W1H
+function openViewForm(unit, waktuBaru){
+  let storageKey = `catatan_${unit}_${waktuBaru}`;
+  let f = JSON.parse(localStorage.getItem(storageKey)) || {};
+
+  let viewPopup = document.getElementById("view5w1hPopup");
+  if(!viewPopup){
+    viewPopup = document.createElement("div");
+    viewPopup.id = "view5w1hPopup";
+    viewPopup.style.cssText = "display:none;position:fixed;top:15%;left:25%;width:50%;background:white;padding:20px;border-radius:8px;border:1px solid #ccc;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:1005;";
+    document.body.appendChild(viewPopup);
+  }
+
+  viewPopup.innerHTML = `
+    <h3 style="color:#007bff;margin-top:0;">Detail Catatan 5W1H (${unit.toUpperCase()})</h3>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:12px;">
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;width:35%;">Penyebab Kejadian</td><td style="border:1px solid #ccc;padding:6px;">${f.penyebab || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">1. Parameter Diperbaiki</td><td style="border:1px solid #ccc;padding:6px;">${f.q1_parameter || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">2. Langkah Penanganan</td><td style="border:1px solid #ccc;padding:6px;">${f.q2_langkah || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">3. Lokasi</td><td style="border:1px solid #ccc;padding:6px;">${f.q3_lokasi || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">4. Waktu Tindakan</td><td style="border:1px solid #ccc;padding:6px;">${f.q4_waktu || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">5. Operator</td><td style="border:1px solid #ccc;padding:6px;">${f.q5_operator || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">6. Analis / Supervisor</td><td style="border:1px solid #ccc;padding:6px;">${f.q6_analis || '-'}</td></tr>
+      <tr><td style="border:1px solid #ccc;padding:6px;background:#f8f9fa;font-weight:bold;">7. Manajer / PJ</td><td style="border:1px solid #ccc;padding:6px;">${f.q7_manajer || '-'}</td></tr>
+    </table>
+    <div style="text-align:center;">
+      <button onclick="document.getElementById('view5w1hPopup').style.display='none'" style="background:#6c757d;color:white;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">Tutup</button>
+    </div>
+  `;
+  viewPopup.style.display = "block";
 }
 
 function openStandar(){ 
