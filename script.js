@@ -334,7 +334,6 @@ function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
     let waktuBaru = tr.cells[0]?.innerText || waktu;
     let storageKey = `catatan_${id}_${waktuBaru}`;
     let hasSavedCatatan = localStorage.getItem(storageKey) !== null || form5w1h;
-
     if(hasSavedCatatan){
       actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat Hasil</button>`;
     } else {
@@ -578,19 +577,16 @@ function generateChart(){
   });
 }
 
-// ================= DOWNLOAD EXCEL (XLSX) - DENGAN MASALAH 3 DIPERBAIKI =================
+// ================= DOWNLOAD EXCEL (XLSX) =================
 function downloadData(){
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
   if(data.length === 0){ alert("Tidak ada data"); return; }
-
   let history = JSON.parse(localStorage.getItem("historyLog")) || [];
   const units = ["pra","reservoir","clearwell","sed1","sed2"];
   let wb = XLSX.utils.book_new();
-
   units.forEach(unit => {
     let unitData = data.filter(d => d.unit === unit).slice(0, 500);
     if(unitData.length === 0) return;
-
     let headers = [
       "Waktu Pencatatan", "Unit WTP",
       unit === 'pra' ? "Turbidity (NTU)" : unit === 'reservoir' ? "Turbidity (NTU)" : unit === 'clearwell' ? "TDS (mg/L)" : "Turbidity (NTU)",
@@ -602,17 +598,14 @@ function downloadData(){
       "Q3: Lokasi", "Q4: Waktu Tindakan",
       "Q5: Operator", "Q6: Analis/Supervisor", "Q7: Manajer"
     ].filter(Boolean);
-
     let rows = [headers];
-
     unitData.forEach(d => {
       let waktuData = new Date(d.waktu).getTime();
       let hist = history.find(h => {
         if(h.unit !== unit) return false;
         let waktuHist = new Date(h.waktu).getTime();
-        return Math.abs(waktuData - waktuHist) < 120000; // toleransi 2 menit
+        return Math.abs(waktuData - waktuHist) < 120000;
       }) || {};
-
       let f = hist.form5w1h || d.form5w1h || {};
       let row = [
         new Date(d.waktu).toLocaleString("id-ID"),
@@ -630,47 +623,35 @@ function downloadData(){
       ];
       rows.push(row);
     });
-
     let ws = XLSX.utils.aoa_to_sheet(rows);
     let colWidths = headers.map(h => ({ wch: Math.max(h.length + 2, 16) }));
     ws['!cols'] = colWidths;
-
     let sheetName = unit === "sed1" ? "Sedimentasi 1"
                   : unit === "sed2" ? "Sedimentasi 2"
                   : unit === "pra"  ? "Pra-Sedimentasi"
                   : unit === "clearwell" ? "Clearwell"
                   : "Reservoir";
-
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
   });
-
   XLSX.writeFile(wb, "Monitoring_Data_5W1H.xlsx");
 }
 
-// ================= FORM 5W1H (DENGAN MASALAH 1 & 2 DIPERBAIKI) =================
+// ================= FORM 5W1H =================
 let currentActiveRow = null;
-
 function openForm(button, unit, status){
   currentActiveRow = button.closest("tr");
   let formEl = document.getElementById("actionForm");
   if(!formEl) return;
-
-  // Isolasi state menggunakan atribut pada form
   formEl.setAttribute('data-unit', unit);
   formEl.setAttribute('data-status', status);
   let waktuBaru = currentActiveRow.cells[0]?.innerText || new Date().toISOString();
   formEl.setAttribute('data-waktu', waktuBaru);
-
-  // Cek apakah sudah ada catatan tersimpan di localStorage berdasarkan unit & waktu baris
   let storageKey = `catatan_${unit}_${waktuBaru}`;
   let existingData = JSON.parse(localStorage.getItem(storageKey));
-
-  // Jika tombol diklik saat status "Lihat 5W1H" (sudah tersimpan), tampilkan popup view
-  if(button.innerText.includes("Lihat 5W1H") || existingData){
+  if(button.innerText.includes("Lihat Hasil") || existingData){
     openViewForm(unit, waktuBaru);
     return;
   }
-
   let paramsList = parameterMap[unit] || [];
   let affectedParam = paramsList[0]?.name || "Turbidity";
   let unitThresh = paramThresholds[unit] || {};
@@ -685,7 +666,6 @@ function openForm(button, unit, status){
       }
     }
   }
-
   let mapData = penyebabKejadianMap[unit];
   let options = [];
   if(mapData && typeof mapData === "object" && Object.keys(mapData).length > 0){
@@ -697,8 +677,8 @@ function openForm(button, unit, status){
     });
     options = Array.from(uniqueSet);
   }
-
   let optionsHtml = options.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+  optionsHtml += `<option value="Lainnya">-- Lainnya (Ketik Manual) --</option>`;
 
   formEl.innerHTML = `
     <h3>Form Catatan Operator & Analisis</h3>
@@ -706,7 +686,10 @@ function openForm(button, unit, status){
     
     <div style="margin-bottom:10px;">
       <label style="font-weight:bold;font-size:12px;display:block;margin-bottom:3px;">Pilih Penyebab Kejadian:</label>
-      <select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;">${optionsHtml}</select>
+      <select id="selectPenyebab" style="width:100%;padding:6px;font-size:12px;margin-bottom:5px;" onchange="togglePenyebabManual(this)">
+        ${optionsHtml}
+      </select>
+      <input type="text" id="inputPenyebabManual" placeholder="Ketik penyebab kejadian lainnya..." style="width:100%;padding:5px;font-size:11px;display:none;box-sizing:border-box;">
     </div>
     
     <div style="margin-bottom:6px;">
@@ -730,7 +713,7 @@ function openForm(button, unit, status){
       <input type="text" id="f_q5" placeholder="Nama operator..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">7. Penerima Laporan :</label>
+      <label style="font-size:11px;">6. Penerima Laporan :</label>
       <input type="text" id="f_pj" placeholder="Nama penerima laporan..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <br>
@@ -739,7 +722,7 @@ function openForm(button, unit, status){
   `;
   formEl.style.display = "block";
 }
-// Fungsi bantu untuk menampilkan/menyembunyikan input manual
+
 function togglePenyebabManual(selectEl){
   let manualInput = document.getElementById("inputPenyebabManual");
   if(!manualInput) return;
@@ -751,6 +734,7 @@ function togglePenyebabManual(selectEl){
     manualInput.value = "";
   }
 }
+
 function closeForm(){ 
   let formEl = document.getElementById("actionForm");
   if(formEl) formEl.style.display = "none"; 
@@ -759,11 +743,10 @@ function closeForm(){
 function saveAction(){
   let formEl = document.getElementById("actionForm");
   if(!formEl || !currentActiveRow) return;
-
   let unit = formEl.getAttribute('data-unit');
   let status = formEl.getAttribute('data-status');
   let waktuBaru = formEl.getAttribute('data-waktu');
-
+  
   let selectPenyebabEl = document.getElementById("selectPenyebab");
   let manualPenyebabEl = document.getElementById("inputPenyebabManual");
   
@@ -783,12 +766,10 @@ function saveAction(){
   let operator = document.getElementById("f_q5")?.value || "";
   let analis = document.getElementById("f_analis")?.value || "";
   let pj = document.getElementById("f_pj")?.value || "";
-
   if(!q2){
     alert("Langkah penanganan (Q2) wajib diisi!");
     return;
   }
-
   let form5w1hData = { 
     penyebab: penyebab,
     q1_parameter: q1, 
@@ -799,13 +780,10 @@ function saveAction(){
     q6_analis: analis, 
     q7_manajer: pj 
   };
-
   let storageKey = `catatan_${unit}_${waktuBaru}`;
   localStorage.setItem(storageKey, JSON.stringify(form5w1hData));
-
   currentActiveRow.cells[currentActiveRow.cells.length-2].innerText = penyebab;
-  currentActiveRow.cells[currentActiveRow.cells.length-1].innerHTML = `<button onclick="openViewForm('${unit}','${waktuBaru}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
-
+  currentActiveRow.cells[currentActiveRow.cells.length-1].innerHTML = `<button onclick="openForm(this,'${unit}','${status}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat Hasil</button>`;
   saveToHistory(unit, status, penyebab, form5w1hData);
   
   let data = JSON.parse(localStorage.getItem("monitoringData")) || [];
@@ -815,16 +793,13 @@ function saveAction(){
     targetData.form5w1h = form5w1hData;
     localStorage.setItem("monitoringData", JSON.stringify(data));
   }
-
   closeForm();
   alert("Catatan Penyebab Kejadian berhasil disimpan!");
 }
 
-// Fungsi popup untuk melihat detail isian 5W1H
 function openViewForm(unit, waktuBaru){
   let storageKey = `catatan_${unit}_${waktuBaru}`;
   let f = JSON.parse(localStorage.getItem(storageKey)) || {};
-
   let viewPopup = document.getElementById("view5w1hPopup");
   if(!viewPopup){
     viewPopup = document.createElement("div");
@@ -832,7 +807,6 @@ function openViewForm(unit, waktuBaru){
     viewPopup.style.cssText = "display:none;position:fixed;top:15%;left:25%;width:50%;background:white;padding:20px;border-radius:8px;border:1px solid #ccc;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:1005;";
     document.body.appendChild(viewPopup);
   }
-
   viewPopup.innerHTML = `
     <h3 style="color:#007bff;margin-top:0;">Detail Catatan 5W1H (${unit.toUpperCase()})</h3>
     <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:12px;">
@@ -869,7 +843,6 @@ function clearAllTables(){
 }
 
 let monitoringInterval = null;
-
 function startMonitoring(){
   if(monitoringInterval) return;
   monitoringInterval = setInterval(()=>{
