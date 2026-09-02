@@ -336,7 +336,7 @@ function addRow(id, values, status, waktu=null, penyebab="-", form5w1h=null){
     let hasSavedCatatan = localStorage.getItem(storageKey) !== null || form5w1h;
 
     if(hasSavedCatatan){
-      actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
+      actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat Hasil</button>`;
     } else {
       actionButton = `<button onclick="openForm(this,'${id}','${status}')" style="background:#ffc107;color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">Isi Catatan</button>`;
     }
@@ -730,12 +730,8 @@ function openForm(button, unit, status){
       <input type="text" id="f_q5" placeholder="Nama operator..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">6. Analis :</label>
-      <input type="text" id="f_analis" placeholder="Nama analis..." style="width:100%;padding:3px;font-size:11px;">
-    </div>
-    <div style="margin-bottom:6px;">
-      <label style="font-size:11px;">7. Penanggung Jawab :</label>
-      <input type="text" id="f_pj" placeholder="Nama penanggung jawab..." style="width:100%;padding:3px;font-size:11px;">
+      <label style="font-size:11px;">7. Penerima Laporan :</label>
+      <input type="text" id="f_pj" placeholder="Nama penerima laporan..." style="width:100%;padding:3px;font-size:11px;">
     </div>
     <br>
     <button onclick="saveAction()" style="background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">Simpan</button>
@@ -743,7 +739,18 @@ function openForm(button, unit, status){
   `;
   formEl.style.display = "block";
 }
-
+// Fungsi bantu untuk menampilkan/menyembunyikan input manual
+function togglePenyebabManual(selectEl){
+  let manualInput = document.getElementById("inputPenyebabManual");
+  if(!manualInput) return;
+  if(selectEl.value === "Lainnya"){
+    manualInput.style.display = "block";
+    manualInput.focus();
+  } else {
+    manualInput.style.display = "none";
+    manualInput.value = "";
+  }
+}
 function closeForm(){ 
   let formEl = document.getElementById("actionForm");
   if(formEl) formEl.style.display = "none"; 
@@ -753,12 +760,22 @@ function saveAction(){
   let formEl = document.getElementById("actionForm");
   if(!formEl || !currentActiveRow) return;
 
-  // Baca unit dan waktu langsung dari atribut form yang terisolasi
   let unit = formEl.getAttribute('data-unit');
   let status = formEl.getAttribute('data-status');
   let waktuBaru = formEl.getAttribute('data-waktu');
 
-  let penyebab = document.getElementById("selectPenyebab")?.value || "-";
+  let selectPenyebabEl = document.getElementById("selectPenyebab");
+  let manualPenyebabEl = document.getElementById("inputPenyebabManual");
+  
+  let penyebab = selectPenyebabEl?.value || "-";
+  if(penyebab === "Lainnya"){
+    penyebab = manualPenyebabEl?.value.trim() || "-";
+    if(penyebab === "" || penyebab === "-"){
+      alert("Silakan ketik penyebab kejadian terlebih dahulu!");
+      return;
+    }
+  }
+
   let q1 = document.getElementById("f_q1")?.value || "";
   let q2 = document.getElementById("f_q2")?.value || "";
   let lokasi = document.getElementById("f_lokasi")?.value || "";
@@ -783,11 +800,9 @@ function saveAction(){
     q7_manajer: pj 
   };
 
-  // Simpan ke localStorage dengan key unik berdasarkan unit + waktu baris
   let storageKey = `catatan_${unit}_${waktuBaru}`;
   localStorage.setItem(storageKey, JSON.stringify(form5w1hData));
 
-  // Update tampilan sel pada baris tabel yang bersangkutan
   currentActiveRow.cells[currentActiveRow.cells.length-2].innerText = penyebab;
   currentActiveRow.cells[currentActiveRow.cells.length-1].innerHTML = `<button onclick="openViewForm('${unit}','${waktuBaru}')" style="background:#28a745;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Lihat 5W1H</button>`;
 
@@ -802,7 +817,7 @@ function saveAction(){
   }
 
   closeForm();
-  alert("Catatan 5W1H & Penyebab Kejadian berhasil disimpan!");
+  alert("Catatan Penyebab Kejadian berhasil disimpan!");
 }
 
 // Fungsi popup untuk melihat detail isian 5W1H
