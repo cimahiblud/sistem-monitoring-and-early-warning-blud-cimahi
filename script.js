@@ -396,7 +396,7 @@ function addFilterRow(id, values, status){
   }
 }
 
-const sheetURL = "https://opensheet.elk.sh/14i8S-08Yg3Vn_WFA6Ny_4uJ2stTzL9rvrTP0Qt0bCmQ/Sheet1";
+const sheetURL = "https://opensheet.elk.sh/12a6D-Bsmq8vo7l56NtkdlHfV7nVV0b9EK2b3TE02etc/Sheet1";
 
 function getStatusPra(turb, tds, ph, temp){
   if(turb >= 40 || tds >= 600 || ph >= 9 || temp >= 30) return "Kritis";
